@@ -1,0 +1,66 @@
+services:
+  # FastAPI service for anonymization
+  api:
+    build: .
+    container_name: pii-anonymizer-api
+    ports:
+      - "8000:8000"
+    environment:
+      - TEMPLATES_DIR=/app/templates
+      - PSEUDONYM_SECRET=${PSEUDONYM_SECRET:-your-secret-key-change-me}
+      - DEFAULT_TEMPLATE_ID=default-pii-v1
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_FALLBACK_URLS=http://host.docker.internal:11434
+      - LLM_MODEL=llama3.1:8b-instruct-q4_K_M
+      - LLM_CONCURRENCY=2
+      - CHUNKING_ENABLED=true
+      - CHUNK_CHAR_TARGET=8000
+      - CHUNK_OVERLAP_CHARS=200
+      - CHUNK_MAX_PARALLEL=2
+      - RULE_PREEXTRACT_ENABLED=true
+      - LOG_SENSITIVE=false
+      - TOKEN_ID_LEN=6
+    volumes:
+      - ./templates:/app/templates:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - anonymizer
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  # Ollama service for LLM inference
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pii-anonymizer-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_NUM_GPU=0  # Set to 1 if GPU available (0 for CPU)
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - anonymizer
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    # Optional: pre-pull manually once:
+    # docker exec pii-anonymizer-ollama ollama pull llama3.1:8b-instruct-q4_K_M
+
+networks:
+  anonymizer:
+    driver: bridge
+
+volumes:
+  ollama_models:
+    driver: local
