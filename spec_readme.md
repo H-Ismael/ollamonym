@@ -1,12 +1,4 @@
 # PII Anonymizer v2 — Template-Driven, Session-Stable, Lossless
-
-**FastAPI + Llama via Ollama + Placeholder Tokenization (no offsets)**
-**Dockerized + runnable with Docker Compose (persistent templates + persistent Ollama models)**
-
-This document is a **complete implementation spec/README** intended to be consumed by a code-generation agent (Codex/Cursor).
-It defines **requirements, API contracts, template format, prompting policy, algorithms, module boundaries, docker/compose layout, persistence, and acceptance tests**.
-**No code appears here by design.**
-
 ---
 
 ## 1) Purpose

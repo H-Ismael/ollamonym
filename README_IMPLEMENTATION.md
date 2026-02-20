@@ -179,4 +179,4 @@ This implementation uses `v2` endpoints per spec:
 
 ## License
 
-Part of the airllm project.
+Part of the ollamonym project.
