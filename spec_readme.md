@@ -1,4 +1,4 @@
-# PII Anonymizer v2 — Template-Driven, Session-Stable, Lossless
+# PII Anonymizer v2 — Template-Driven, Session-Stable, Lossless : OLLANONYM
 ---
 
 ## 1) Purpose
