@@ -21,6 +21,9 @@ OLLAMA_FALLBACK_URLS = [
     if url.strip()
 ]
 LLM_MODEL = os.getenv("LLM_MODEL", "llama3.1:8b-instruct-q4_K_M")
+OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "30m")
+LLM_NUM_PREDICT = int(os.getenv("LLM_NUM_PREDICT", "512"))
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
 
 # Concurrency and chunking
 LLM_CONCURRENCY = int(os.getenv("LLM_CONCURRENCY", "1"))

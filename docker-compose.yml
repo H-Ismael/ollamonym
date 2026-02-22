@@ -13,6 +13,9 @@ services:
       - OLLAMA_FALLBACK_URLS=http://host.docker.internal:11434
       - LLM_MODEL=llama3.1:8b-instruct-q4_K_M
       - LLM_CONCURRENCY=2
+      - LLM_NUM_PREDICT=512
+      - LLM_TEMPERATURE=0
+      - OLLAMA_KEEP_ALIVE=30m
       - CHUNKING_ENABLED=true
       - CHUNK_CHAR_TARGET=8000
       - CHUNK_OVERLAP_CHARS=200
@@ -42,8 +45,19 @@ services:
     container_name: pii-anonymizer-ollama
     ports:
       - "11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     environment:
-      - OLLAMA_NUM_GPU=0  # Set to 1 if GPU available (0 for CPU)
+      - OLLAMA_NUM_GPU=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_NUM_PARALLEL=2
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     volumes:
       - ollama_models:/root/.ollama
     networks:

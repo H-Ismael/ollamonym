@@ -46,6 +46,9 @@ async def lifespan(app: FastAPI):
         config.OLLAMA_BASE_URL,
         config.LLM_MODEL,
         fallback_urls=config.OLLAMA_FALLBACK_URLS,
+        keep_alive=config.OLLAMA_KEEP_ALIVE,
+        num_predict=config.LLM_NUM_PREDICT,
+        temperature=config.LLM_TEMPERATURE,
     )
 
     # Check Ollama health

@@ -20,6 +20,9 @@ class OllamaClient:
         model: str,
         timeout: float = 60.0,
         fallback_urls: Optional[List[str]] = None,
+        keep_alive: Optional[str] = None,
+        num_predict: Optional[int] = None,
+        temperature: Optional[float] = None,
     ):
         """
         Initialize Ollama client.
@@ -34,6 +37,9 @@ class OllamaClient:
         self.model = model
         self._effective_model: Optional[str] = None
         self.timeout = timeout
+        self.keep_alive = keep_alive
+        self.num_predict = num_predict
+        self.temperature = temperature
         self.client = httpx.Client(timeout=timeout)
 
     def _candidate_base_urls(self) -> List[str]:
@@ -180,6 +186,11 @@ class OllamaClient:
     def _chat(self, system_message: str, user_message: str) -> str:
         """Submit a non-streaming Ollama chat request and return text content."""
         model_name = self._resolve_model_name()
+        options = {}
+        if self.num_predict is not None and self.num_predict > 0:
+            options["num_predict"] = self.num_predict
+        if self.temperature is not None:
+            options["temperature"] = self.temperature
         payload = {
             "model": model_name,
             "messages": [
@@ -187,7 +198,10 @@ class OllamaClient:
                 {"role": "user", "content": user_message},
             ],
             "stream": False,
+            "options": options,
         }
+        if self.keep_alive:
+            payload["keep_alive"] = self.keep_alive
 
         data = self._request_json("POST", "/api/chat", json_payload=payload)
         return data.get("message", {}).get("content", "")

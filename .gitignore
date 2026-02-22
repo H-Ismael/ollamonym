@@ -4,3 +4,4 @@ airllmvenv/
 *.pyo
 *.pyd
 .Python
+backlog.md
