@@ -3,4 +3,9 @@ airllmvenv/
 *.pyc
 *.pyo
 *.pyd
+<<<<<<< HEAD
 .Python
+=======
+.Python
+backlog.md
+>>>>>>> init/init-with-q4-hybrid-ner

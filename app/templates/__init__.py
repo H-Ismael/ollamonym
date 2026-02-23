@@ -1,0 +1,1 @@
+"""Template management module."""

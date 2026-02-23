@@ -1,0 +1,86 @@
+{
+  "template_id": "default-pii-v1",
+  "version": 3,
+  "description": "Baseline PII detection and anonymization",
+  "entities": [
+    {
+      "id": "PERSON",
+      "enabled": true,
+      "instructions": "Detect full names of real people (first and last names), including lowercase names when context indicates a person.",
+      "examples": {
+        "positive": ["John Doe", "Dr. Amina El Fassi", "Maria Garcia", "robert smith"],
+        "negative": ["Monday", "May", "Paris Agreement", "the person"]
+      }
+    },
+    {
+      "id": "ORG",
+      "enabled": true,
+      "instructions": "Detect organizations, companies, and institutions.",
+      "examples": {
+        "positive": ["Acme Corp", "Harvard University", "World Health Organization"],
+        "negative": ["the organization", "group of people"]
+      }
+    },
+    {
+      "id": "EMAIL",
+      "enabled": true,
+      "instructions": "Detect email addresses.",
+      "examples": {
+        "positive": ["john.doe@example.com", "support@company.org"],
+        "negative": ["contact @ company"]
+      }
+    },
+    {
+      "id": "PHONE",
+      "enabled": true,
+      "instructions": "Detect phone numbers.",
+      "examples": {
+        "positive": ["+1 (555) 123-4567", "555-1234"],
+        "negative": ["call me", "phone"]
+      }
+    },
+    {
+        "id":"LINKS",
+        "enabled": true,
+        "instructions": "Detect URLs and web links or website names",
+        "examples": {
+          "positive": ["https://example.com", "http://www.example.org","196.168.1.1","examplze.com"],
+          "negative": ["click here", "visit website"]
+        }
+    }
+  ],
+  "llm": {
+    "model": "llama3.1:8b-instruct-q4_K_M",
+    "system": "You are a PII extraction expert. Return ONLY valid JSON matching the specified schema. Do not include any explanations or extra text.",
+    "max_entities": 200
+  },
+  "canon": {
+    "unicode_normalize": "NFKC",
+    "collapse_whitespace": true,
+    "casefold": true,
+    "strip_outer_punct": true
+  },
+  "replacement": {
+    "placeholder_format": "<<{ENTITY}:{ID}>>",
+    "pseudonym": {
+      "mode": "session_stable",
+      "id_len": 6,
+      "secret_env": "PSEUDONYM_SECRET",
+      "providers": {
+        "PERSON": "name",
+        "ORG": "company",
+        "EMAIL": "email",
+        "PHONE": "phone_number"
+      }
+    }
+  },
+  "postpass_alias": {
+    "enabled": true,
+    "entity_ids": ["PERSON", "ORG", "EMAIL", "PHONE", "LINKS"],
+    "min_token_len": 2,
+    "window_size": 2,
+    "min_overlap_tokens": 2,
+    "session_ttl_seconds": 3600,
+    "max_aliases_per_entity": 50
+  }
+}
