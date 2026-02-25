@@ -1,5 +1,7 @@
 # PII Anonymizer v2
 
+This implementation supports a pseudonymization-first workflow that is often easier to position for GDPR/compliance-sensitive LLM usage than blunt redaction, because it preserves meaning and entity continuity for downstream prompts.
+
 ## Quick Start
 
 ### Prerequisites

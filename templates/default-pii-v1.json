@@ -1,7 +1,7 @@
 {
   "template_id": "default-pii-v1",
   "version": 3,
-  "description": "Baseline PII detection and anonymization",
+  "description": "Baseline PII detection with reversible anonymization/pseudonymization for privacy-preserving LLM workflows",
   "entities": [
     {
       "id": "PERSON",

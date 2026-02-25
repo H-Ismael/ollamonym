@@ -1,6 +1,6 @@
 # ollamonym
 
-Template-driven, session-stable anonymization for teams that want to use LLM workflows while reducing data leakage risk.
+Template-driven, session-stable anonymization and pseudonymization for teams that want to use LLM workflows while reducing data leakage risk.
 
 ## Why This Project Exists
 
@@ -15,10 +15,13 @@ ollamonym gives you a practical middle path:
 
 In short: **LLM utility without shipping raw private identifiers by default**.
 
+A practical positioning for teams under GDPR/compliance pressure: **pseudonymization is often more useful than hard redaction/anonymization for LLM workflows**, because it preserves semantic continuity and referential meaning across long or distant queries while still reducing direct identifier exposure.
+
 ## Core Value Proposition
 
 - **Leakage-risk reduction**: sensitive fields are transformed before downstream processing.
 - **Operational realism**: anonymized text remains readable and coherent.
+- **GDPR-aligned pseudonymization value**: preserve contextual meaning for downstream LLM tasks while reducing exposure of direct identifiers.
 - **Reversible by design**: exact restoration via mapping when needed.
 - **Template extensibility**: add domain entities without changing core pipeline.
 - **Session consistency**: repeated mentions stay stable within a session.
@@ -211,6 +214,8 @@ Template controls:
 ## Security and Compliance Positioning
 
 - Keeps sensitive originals out of downstream prompts by default.
+- Pseudonymization can be a strong GDPR/compliance selling point when full anonymization would destroy the context needed for useful LLM responses.
+- Preserves semantic continuity across distant mentions/queries better than blunt redaction, which improves downstream LLM utility.
 - Supports self-hosted/local inference stacks.
 - Allows strict control of what is reversible and by whom (through mapping handling policy).
 
