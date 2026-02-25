@@ -3,6 +3,7 @@
 ## Build Completed ✅
 
 Full implementation of the PII anonymization service following the spec_readme.md.
+The design supports reversible pseudonymization, which is often more useful than hard anonymization/redaction for downstream LLM workflows because it keeps contextual meaning intact.
 
 ### Modules Implemented
 

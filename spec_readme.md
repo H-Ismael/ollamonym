@@ -16,6 +16,8 @@ Build a modular service that:
 
 The system is **latency-first**, avoids LLM offsets, and keeps prompts **atomic** and traceable.
 
+Positioning note: for many GDPR/compliance-sensitive LLM use cases, **pseudonymization is more operationally useful than irreversible anonymization/redaction** because it preserves referential continuity and contextual meaning across long or distant prompts while reducing direct identifier exposure.
+
 ---
 
 ## 2) Core invariants (must-haves)
