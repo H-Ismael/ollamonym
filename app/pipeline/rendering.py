@@ -139,6 +139,12 @@ class RealisticRenderer:
         fake_tokens = [t for t in re.split(r"\s+", base_fake.strip()) if t]
         if not orig_tokens or not group_tokens or not fake_tokens:
             return base_fake
+
+        # Preserve single-token surface shape even for standalone mentions
+        # (e.g., "Madonna" should not become a two-token fake name).
+        if len(orig_tokens) == 1 and len(group_tokens) == 1:
+            return fake_tokens[0]
+
         if len(orig_tokens) >= len(group_tokens):
             return base_fake
 

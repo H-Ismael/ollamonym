@@ -47,7 +47,17 @@
           "positive": ["https://example.com", "http://www.example.org","196.168.1.1","examplze.com"],
           "negative": ["click here", "visit website"]
         }
-    }
+    },
+    
+      {
+          "id":"ADDRESS",
+          "enabled": true,
+          "instructions": "Detect physical addresses, including street addresses, city names, and postal codes.",
+          "examples": {
+            "positive": ["4000, louisville , pensylvania ,USA","123 Main St, Springfield, IL 62704", "456 Elm Street, Apt 2B, Anytown, CA 90210"],
+            "negative": ["the address", "my location"]
+          }
+      }
   ],
   "llm": {
     "model": "llama3.1:8b-instruct-q4_K_M",
