@@ -1,7 +1,7 @@
 {
-  "template_id": "default-pii-v1",
-  "version": 3,
-  "description": "Baseline PII detection with reversible anonymization/pseudonymization for privacy-preserving LLM workflows",
+  "template_id": "default-pii-qwen2.5-7b-v1",
+  "version": 1,
+  "description": "Baseline PII detection with Qwen2.5 7B Instruct (Q4_K_M) for side-by-side comparison",
   "entities": [
     {
       "id": "PERSON",
@@ -35,32 +35,31 @@
       "enabled": true,
       "instructions": "Detect phone numbers.",
       "examples": {
-        "positive": ["+1 (555) 123-4567", "555-1234"],
+        "positive": ["+1 (555) 123-4567", "555-1234","002312345678"],
         "negative": ["call me", "phone"]
       }
     },
     {
-        "id":"LINKS",
-        "enabled": true,
-        "instructions": "Detect URLs and web links or website names",
-        "examples": {
-          "positive": ["https://example.com", "http://www.example.org","196.168.1.1","examplze.com"],
-          "negative": ["click here", "visit website"]
-        }
-    },
-    
-      {
-          "id":"ADDRESS",
-          "enabled": true,
-          "instructions": "Detect physical addresses, including street addresses, city names, and postal codes.",
-          "examples": {
-            "positive": ["4000, louisville , pensylvania ,USA","123 Main St, Springfield, IL 62704", "456 Elm Street, Apt 2B, Anytown, CA 90210"],
-            "negative": ["the address", "my location"]
-          }
+      "id": "LINKS",
+      "enabled": true,
+      "instructions": "Detect URLs and web links or website names",
+      "examples": {
+        "positive": ["https://example.com", "http://www.example.org", "196.168.1.1", "examplze.com"],
+        "negative": ["click here", "visit website"]
       }
+    },
+    {
+      "id": "ADDRESS",
+      "enabled": true,
+      "instructions": "Detect physical addresses, including street addresses, city names, and postal codes.",
+      "examples": {
+        "positive": ["4000, louisville , pensylvania ,USA", "123 Main St, Springfield, IL 62704", "456 Elm Street, Apt 2B, Anytown, CA 90210"],
+        "negative": ["the address", "my location"]
+      }
+    }
   ],
   "llm": {
-    "model": "llama3.1:8b-instruct-q4_K_M",
+    "model": "qwen2.5:7b-instruct-q4_K_M",
     "system": "You are a PII extraction expert. Return ONLY valid JSON matching the specified schema. Do not include any explanations or extra text.",
     "max_entities": 200
   },
