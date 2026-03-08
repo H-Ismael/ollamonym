@@ -12,7 +12,6 @@ from app.schemas.models import (
     AnonymizeResponse,
     AnonymizationMapping,
     MappingMetadata,
-    ModelRuntimeInfo,
     DeanonymizeRequest,
     DeanonymizeResponse,
     TemplatesListResponse,
@@ -31,13 +30,12 @@ logger = logging.getLogger(__name__)
 template_registry: TemplateRegistry = None
 ollama_client: OllamaClient = None
 detector: Detector = None
-model_runtime_info: ModelRuntimeInfo | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage app lifecycle: startup and shutdown."""
-    global template_registry, ollama_client, detector, model_runtime_info
+    global template_registry, ollama_client, detector
 
     # Startup
     logger.info("Starting up PII Anonymizer Service v2")
@@ -123,7 +121,6 @@ async def anonymize(request: AnonymizeRequest):
         - anonymized_text: Text with entities replaced by placeholders (or fakes)
         - mapping: Complete mapping including token_to_original, token_to_fake, etc.
     """
-    global model_runtime_info
     try:
         # Validate template exists
         if not template_registry.template_exists(request.template_id):
@@ -139,6 +136,7 @@ async def anonymize(request: AnonymizeRequest):
 
         # Build response
         template = template_registry.get_template(request.template_id)
+        model_runtime_info = ollama_client.get_model_runtime_info(template.llm.model)
         mapping = AnonymizationMapping(
             token_to_original=token_to_orig,
             token_to_fake=token_to_fake,

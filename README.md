@@ -188,6 +188,35 @@ curl http://localhost:8000/health
 - `GET /v2/templates/{template_id}`
 - `POST /v2/templates/validate`
 
+### Compare Llama vs Qwen
+
+This repo now includes model-specific templates you can switch via `template_id`:
+
+- `default-pii-v1` (Llama baseline)
+- `default-pii-qwen2.5-7b-v1`
+- `default-pii-qwen2.5-14b-v1`
+
+Pull models in Ollama (once):
+
+```bash
+ollama pull qwen2.5:7b-instruct-q4_K_M
+ollama pull qwen2.5:14b-instruct-q4_K_M
+```
+
+Run the same text against different templates to compare extraction quality/latency:
+
+```bash
+curl -X POST http://localhost:8000/v2/anonymize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id":"bench-1",
+    "template_id":"default-pii-qwen2.5-14b-v1",
+    "text":"Jensen Huang leads NVIDIA. Contact: john.doe@example.com",
+    "render_mode":"structural",
+    "language":"auto"
+  }'
+```
+
 ## Configuration Highlights
 
 Important env vars:

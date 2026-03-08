@@ -203,9 +203,14 @@ class Detector:
         """Extract from a single text (no chunking)."""
         system_msg = self.compiler.get_cached_system_message(template)
         user_msg = self.compiler.compile_user_message(template, text)
+        model_name = template.llm.model or None
 
         try:
-            entities = self.ollama.extract_entities(system_msg, user_msg)
+            entities = self.ollama.extract_entities(
+                system_msg,
+                user_msg,
+                model=model_name,
+            )
             return entities
         except Exception as e:
             logger.error(f"LLM extraction failed: {e}")
@@ -225,6 +230,7 @@ class Detector:
         logger.info(f"Chunked text into {len(chunks)} chunks")
 
         system_msg = self.compiler.get_cached_system_message(template)
+        model_name = template.llm.model or None
         tasks = []
 
         for idx, chunk in enumerate(chunks):
@@ -234,7 +240,11 @@ class Detector:
 
             def task_fn(system_msg=system_msg, user_msg=user_msg, idx=idx):
                 try:
-                    return self.ollama.extract_entities(system_msg, user_msg)
+                    return self.ollama.extract_entities(
+                        system_msg,
+                        user_msg,
+                        model=model_name,
+                    )
                 except Exception as e:
                     logger.error(f"LLM extraction failed for chunk {idx}: {e}")
                     raise
@@ -253,8 +263,10 @@ class Detector:
         entities: List[ExtractedEntity],
     ) -> List[ExtractedEntity]:
         """
-        Drop low-signal fragments for URL/LINK-like entity classes.
-        Example: bare 'com' emitted as LINKS should be ignored.
+        Drop low-signal structured fragments.
+        Examples:
+        - bare 'com' emitted as LINKS should be ignored
+        - EMAIL values must include '@' or '.at.' in valid email shape
         """
         filtered: List[ExtractedEntity] = []
         for entity in entities:
@@ -265,5 +277,7 @@ class Detector:
             if is_link_like:
                 if TLD_FRAGMENT_RE.fullmatch(text) and "." not in text and "/" not in text:
                     continue
+            if entity_id == "EMAIL" and not RuleExtractor.looks_like_email(text):
+                continue
             filtered.append(entity)
         return filtered

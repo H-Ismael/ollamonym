@@ -35,7 +35,7 @@ class OllamaClient:
         self.base_url = base_url.rstrip("/")
         self.fallback_urls = [url.rstrip("/") for url in (fallback_urls or [])]
         self.model = model
-        self._effective_model: Optional[str] = None
+        self._effective_models: dict[str, str] = {}
         self.timeout = timeout
         self.keep_alive = keep_alive
         self.num_predict = num_predict
@@ -102,44 +102,46 @@ class OllamaClient:
                 names.append(name)
         return names
 
-    def _resolve_model_name(self) -> str:
+    def _resolve_model_name(self, requested_model: Optional[str] = None) -> str:
         """Resolve requested model to an installed model name when possible."""
-        if self._effective_model:
-            return self._effective_model
+        requested = requested_model or self.model
+        if requested in self._effective_models:
+            return self._effective_models[requested]
 
         names = self._model_names()
-        if self.model in names:
-            self._effective_model = self.model
-            return self._effective_model
+        if requested in names:
+            self._effective_models[requested] = requested
+            return requested
 
-        requested_base = self.model.split(":", 1)[0]
+        requested_base = requested.split(":", 1)[0]
         latest_candidate = f"{requested_base}:latest"
         if latest_candidate in names:
-            self._effective_model = latest_candidate
+            self._effective_models[requested] = latest_candidate
             logger.warning(
                 "Requested model %s is unavailable; using %s",
-                self.model,
-                self._effective_model,
+                requested,
+                self._effective_models[requested],
             )
-            return self._effective_model
+            return self._effective_models[requested]
 
         for name in names:
             if name.split(":", 1)[0] == requested_base:
-                self._effective_model = name
+                self._effective_models[requested] = name
                 logger.warning(
                     "Requested model %s is unavailable; using %s",
-                    self.model,
-                    self._effective_model,
+                    requested,
+                    self._effective_models[requested],
                 )
-                return self._effective_model
+                return self._effective_models[requested]
 
-        self._effective_model = self.model
-        return self._effective_model
+        self._effective_models[requested] = requested
+        return requested
 
     def extract_entities(
         self,
         system_message: str,
         user_message: str,
+        model: Optional[str] = None,
     ) -> List[ExtractedEntity]:
         """
         Call Ollama to extract entities, with schema enforcement.
@@ -165,7 +167,7 @@ class OllamaClient:
             if attempt == 1:
                 effective_user_message = f"{user_message}{strict_suffix}"
 
-            raw_output = self._chat(system_message, effective_user_message)
+            raw_output = self._chat(system_message, effective_user_message, model=model)
 
             try:
                 json_str = self._extract_json(raw_output)
@@ -183,9 +185,14 @@ class OllamaClient:
         logger.error("Invalid LLM output after retry: %s", last_error)
         raise ValueError(f"Invalid LLM output: {last_error}")
 
-    def _chat(self, system_message: str, user_message: str) -> str:
+    def _chat(
+        self,
+        system_message: str,
+        user_message: str,
+        model: Optional[str] = None,
+    ) -> str:
         """Submit a non-streaming Ollama chat request and return text content."""
-        model_name = self._resolve_model_name()
+        model_name = self._resolve_model_name(model)
         options = {}
         if self.num_predict is not None and self.num_predict > 0:
             options["num_predict"] = self.num_predict
@@ -229,7 +236,7 @@ class OllamaClient:
         except Exception:
             return False
 
-    def get_model_runtime_info(self) -> Optional[ModelRuntimeInfo]:
+    def get_model_runtime_info(self, model: Optional[str] = None) -> Optional[ModelRuntimeInfo]:
         """Get runtime metadata for the configured model, if available."""
         try:
             payload = self._request_json("GET", "/api/tags", timeout=5.0)
@@ -241,7 +248,7 @@ class OllamaClient:
         if not isinstance(models, list):
             return None
 
-        requested = self.model
+        requested = model or self.model
         requested_base = requested.split(":", 1)[0]
 
         selected = None

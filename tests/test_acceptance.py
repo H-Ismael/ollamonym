@@ -313,11 +313,13 @@ class TestJSONEnforcement:
         """Test that invalid LLM output raises an error."""
         client = OllamaClient("http://localhost:11434", "llama3.1")
 
-        # Mock invalid response
-        invalid_output = "This is not JSON"
-        with pytest.raises(ValueError):
-            client._extract_json(invalid_output)  # This will still pass
-            # The error happens during JSON parsing
+        # Mock invalid chat output; error is raised in extract_entities parsing/validation
+        with patch.object(client, "_chat", return_value="This is not JSON"):
+            with pytest.raises(ValueError):
+                client.extract_entities(
+                    system_message="Return JSON only",
+                    user_message="Extract entities from: John Doe",
+                )
 
     def test_llm_output_schema_validation(self):
         """Test that LLM output must match schema."""
@@ -420,6 +422,12 @@ class TestRuleExtraction:
 
         assert ("EMAIL", "john.doe@example.com") in pairs
         assert ("PHONE", "555-1234") in pairs
+
+    def test_rule_extractor_detects_dot_at_email(self):
+        text = "Use john.doe.at.example.com for privacy-safe sharing."
+        entities = RuleExtractor.extract(text, {"EMAIL"})
+        values = {e.text for e in entities if e.entity_id == "EMAIL"}
+        assert "john.doe.at.example.com" in values
 
 
 class TestSearchView:
@@ -778,6 +786,71 @@ class TestStructuredEntityFiltering:
         _, token_to_original, _, _ = detector.detect_and_anonymize(req)
         values = set(token_to_original.values())
         assert "com" not in values
+
+    def test_filter_invalid_email_fragments_from_llm(self, template_registry):
+        mock_ollama = Mock()
+        mock_ollama.extract_entities.return_value = [
+            ExtractedEntity(entity_id="EMAIL", text="chatbot"),
+            ExtractedEntity(entity_id="EMAIL", text="com"),
+            ExtractedEntity(entity_id="EMAIL", text="Soukaina"),
+            ExtractedEntity(entity_id="EMAIL", text="alice@example.com"),
+            ExtractedEntity(entity_id="EMAIL", text="bob.at.example.com"),
+        ]
+
+        detector = Detector(
+            template_registry=template_registry,
+            ollama_client=mock_ollama,
+            pseudonym_secret="test-secret",
+            chunking_enabled=False,
+        )
+
+        req = AnonymizeRequest(
+            session_id="emails",
+            template_id="test-pii",
+            text="Contacts: alice@example.com and bob.at.example.com",
+            render_mode="structural",
+            language="auto",
+        )
+
+        _, token_to_original, _, _ = detector.detect_and_anonymize(req)
+        values = set(token_to_original.values())
+        assert "alice@example.com" in values
+        assert "bob.at.example.com" in values
+        assert "chatbot" not in values
+        assert "com" not in values
+        assert "Soukaina" not in values
+
+
+class TestTemplateModelSelection:
+    """Per-template model override should be forwarded to Ollama."""
+
+    def test_detector_passes_template_model_to_ollama(self, template_registry):
+        template = template_registry.get_template("test-pii")
+        template.llm.model = "qwen2.5:7b-instruct-q4_K_M"
+
+        mock_ollama = Mock()
+        mock_ollama.extract_entities.return_value = [
+            ExtractedEntity(entity_id="PERSON", text="John Doe"),
+        ]
+
+        detector = Detector(
+            template_registry=template_registry,
+            ollama_client=mock_ollama,
+            pseudonym_secret="test-secret",
+            chunking_enabled=False,
+        )
+
+        req = AnonymizeRequest(
+            session_id="model-override",
+            template_id="test-pii",
+            text="John Doe visited yesterday.",
+            render_mode="structural",
+            language="auto",
+        )
+
+        detector.detect_and_anonymize(req)
+        _, kwargs = mock_ollama.extract_entities.call_args
+        assert kwargs.get("model") == "qwen2.5:7b-instruct-q4_K_M"
 
 
 class TestRealisticLinkRendering:
