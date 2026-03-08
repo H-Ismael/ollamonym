@@ -313,11 +313,13 @@ class TestJSONEnforcement:
         """Test that invalid LLM output raises an error."""
         client = OllamaClient("http://localhost:11434", "llama3.1")
 
-        # Mock invalid response
-        invalid_output = "This is not JSON"
-        with pytest.raises(ValueError):
-            client._extract_json(invalid_output)  # This will still pass
-            # The error happens during JSON parsing
+        # Mock invalid chat output; error is raised in extract_entities parsing/validation
+        with patch.object(client, "_chat", return_value="This is not JSON"):
+            with pytest.raises(ValueError):
+                client.extract_entities(
+                    system_message="Return JSON only",
+                    user_message="Extract entities from: John Doe",
+                )
 
     def test_llm_output_schema_validation(self):
         """Test that LLM output must match schema."""
