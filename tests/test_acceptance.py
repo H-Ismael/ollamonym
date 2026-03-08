@@ -2,6 +2,7 @@
 
 import pytest
 import json
+import re
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -25,6 +26,7 @@ from app.pipeline.deanonymizer import Deanonymizer
 from app.pipeline.span_resolver import SpanResolver
 from app.pipeline.normalizer import Normalizer
 from app.pipeline.rule_extractor import RuleExtractor
+from app.pipeline.rendering import RealisticRenderer
 from app.utils.hashing import TokenIDGenerator
 from app.utils.text_norm import SearchView, TextNormalizer
 
@@ -881,6 +883,52 @@ class TestRealisticLinkRendering:
         fake = next(iter(token_to_fake.values()))
         assert "." in fake
         assert " " not in fake
+
+
+class TestRealisticAddressRendering:
+    """Address-like entities should not degrade to single random words."""
+
+    def test_address_entity_uses_address_like_fake(self):
+        renderer = RealisticRenderer(secret="test-secret", session_id="s-addr")
+        fake = renderer.generate_fake(
+            entity_id="ADDRESS",
+            token_id="ABC123",
+            original="Brigit Macaron Avenue 17 New York",
+            group_key="Brigit Macaron Avenue 17 New York",
+        )
+        assert not re.fullmatch(r"[A-Za-z]+", fake)
+
+
+class TestLLMFakeProvider:
+    """LLM-based faking should be available as an explicit option."""
+
+    def test_detector_uses_llm_fake_provider_when_requested(self, template_registry):
+        mock_ollama = Mock()
+        mock_ollama.extract_entities.return_value = [
+            ExtractedEntity(entity_id="PERSON", text="John Doe"),
+        ]
+        mock_ollama.generate_fake_value.return_value = "Alex Stone"
+
+        detector = Detector(
+            template_registry=template_registry,
+            ollama_client=mock_ollama,
+            pseudonym_secret="test-secret",
+            chunking_enabled=False,
+        )
+
+        req = AnonymizeRequest(
+            session_id="s-llm-fake",
+            template_id="test-pii",
+            text="John Doe joined the meeting.",
+            render_mode="realistic",
+            fake_provider="llm",
+            language="auto",
+        )
+
+        anon_text, _, token_to_fake, _ = detector.detect_and_anonymize(req)
+        assert "Alex Stone" in anon_text
+        assert "Alex Stone" in token_to_fake.values()
+        mock_ollama.generate_fake_value.assert_called()
 
 
 if __name__ == "__main__":

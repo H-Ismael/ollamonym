@@ -183,10 +183,18 @@ curl http://localhost:8000/health
 ### API Endpoints
 
 - `POST /v2/anonymize`
+- `POST /v2/anonymize/stream` (SSE-style stream for UI visualization)
 - `POST /v2/deanonymize`
 - `GET /v2/templates`
 - `GET /v2/templates/{template_id}`
 - `POST /v2/templates/validate`
+- `POST /v2/templates/save` (create/update custom templates)
+- `DELETE /v2/templates/{template_id}` (delete custom templates)
+- `GET /` (web UX demo)
+
+Web pages:
+- `/` -> landing page
+- `/web/demo.html` -> interactive demo studio
 
 ### Compare Llama vs Qwen
 
@@ -265,11 +273,10 @@ Note: this reduces leakage risk materially, but final security posture still dep
 
 ### Product / UX
 
-- Web UI for:
-  - live text testing
-  - template editing
-  - rule tuning and validation
-  - side-by-side structural vs realistic preview
+- UX polish and extension for:
+  - richer live token analytics and traces
+  - collaborative template lifecycle workflows
+  - advanced policy presets by compliance profile
 
 ### Metrics and Governance
 

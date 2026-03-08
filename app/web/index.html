@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ollamonym | Privacy Middleware for LLM Pipelines</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/web/app.css" />
+</head>
+<body class="landing-body">
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <main class="landing-wrap">
+    <section class="hero-card">
+      <p class="eyebrow">Privacy Middleware for LLM Pipelines</p>
+      <h1>Use LLMs Without Sending Raw Sensitive Data by Default</h1>
+      <p class="hero-copy">
+        Ollamonym detects sensitive entities, transforms them into reversible pseudonyms, and preserves semantic continuity for downstream AI tasks.
+      </p>
+      <div class="hero-badges">
+        <span>Reversible</span>
+        <span>Session-Stable</span>
+        <span>Template-Driven</span>
+        <span>Local-First</span>
+      </div>
+      <div class="hero-cta">
+        <a class="btn primary" href="/web/demo.html">Enter Live Demo</a>
+        <a class="btn" href="/docs" target="_blank" rel="noopener noreferrer">API Docs</a>
+      </div>
+      <div class="signal-line" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </section>
+
+    <section class="hero-grid">
+      <article class="card">
+        <h3>Risk-Reduced Prompting</h3>
+        <p>Private values are transformed before downstream model calls, reducing direct exposure without destroying text utility.</p>
+      </article>
+      <article class="card">
+        <h3>Realistic or Structural</h3>
+        <p>Switch between deterministic placeholders and realistic pseudonyms for analyst-friendly review workflows.</p>
+      </article>
+      <article class="card">
+        <h3>Policy as Template</h3>
+        <p>Tune entity classes, alias rules, and fake providers through JSON templates, not pipeline rewrites.</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

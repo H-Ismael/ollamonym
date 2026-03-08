@@ -67,6 +67,7 @@ class Detector:
         self.compiler = PromptCompiler()
         self.inference_queue = InferenceQueue(max_concurrency=self.chunk_max_parallel)
         self.alias_postpass = AliasPostPass()
+        self.llm_fake_cache: Dict[tuple[str, str], str] = {}
 
     def detect_and_anonymize(
         self,
@@ -151,11 +152,14 @@ class Detector:
             provider_map = None
             if template.replacement.pseudonym and template.replacement.pseudonym.providers:
                 provider_map = template.replacement.pseudonym.providers
-            renderer = RealisticRenderer(
-                self.pseudonym_secret,
-                request.session_id,
-                provider_map=provider_map,
-            )
+            use_llm_fake = request.fake_provider.lower() == "llm"
+            renderer = None
+            if not use_llm_fake:
+                renderer = RealisticRenderer(
+                    self.pseudonym_secret,
+                    request.session_id,
+                    provider_map=provider_map,
+                )
             token_to_fake = {}
             fake_to_token = {}
 
@@ -172,17 +176,48 @@ class Detector:
                         original,
                         template.canon,
                     )
-                    fake = renderer.generate_fake(
-                        entity_id,
-                        token_id,
-                        original=original,
-                        group_key=group_key or token_id,
-                    )
+                    if use_llm_fake:
+                        fake = self._generate_llm_fake(
+                            session_id=request.session_id,
+                            token=token,
+                            entity_id=entity_id,
+                            original=original,
+                            model=template.llm.model or None,
+                        )
+                    else:
+                        fake = renderer.generate_fake(
+                            entity_id,
+                            token_id,
+                            original=original,
+                            group_key=group_key or token_id,
+                        )
+                    if fake in fake_to_token and fake_to_token[fake] != token:
+                        fake = f"{fake}-{token_id[:3]}"
                     token_to_fake[token] = fake
                     fake_to_token[fake] = token
                     anonymized_text = anonymized_text.replace(token, fake)
 
         return anonymized_text, token_to_original, token_to_fake, fake_to_token
+
+    def _generate_llm_fake(
+        self,
+        session_id: str,
+        token: str,
+        entity_id: str,
+        original: str,
+        model: Optional[str],
+    ) -> str:
+        cache_key = (session_id, token)
+        if cache_key in self.llm_fake_cache:
+            return self.llm_fake_cache[cache_key]
+
+        fake = self.ollama.generate_fake_value(
+            entity_id=entity_id,
+            original_value=original,
+            model=model,
+        )
+        self.llm_fake_cache[cache_key] = fake
+        return fake
 
     def _extract_entities(
         self,
