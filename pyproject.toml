@@ -2,7 +2,9 @@
 name = "pii-anonymizer"
 version = "2.0.0"
 description = "Template-driven, session-stable, lossless PII anonymization with FastAPI + Ollama"
-authors = ["Your Name <you@example.com>"]
+authors = ["H Ismael <h-ismail@users.noreply.github.com>"]
+homepage = "https://github.com/H-Ismael"
+repository = "https://github.com/H-Ismael"
 package-mode = false
 
 [tool.poetry.dependencies]

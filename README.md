@@ -2,6 +2,11 @@
 
 Template-driven, session-stable anonymization and pseudonymization for teams that want to use LLM workflows while reducing data leakage risk.
 
+## Credits
+
+- Open-source project by **H Ismael**
+- GitHub: https://github.com/H-Ismael
+
 ## Why This Project Exists
 
 Most teams want LLM-powered automation, but they cannot expose raw sensitive text to third-party providers without creating legal, security, and reputational risk.

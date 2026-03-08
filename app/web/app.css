@@ -181,3 +181,18 @@ th, td { border-bottom: 1px solid var(--line); padding: .4rem; text-align: left;
 @media (min-width: 900px) {
   .hero-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+.site-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: .9rem;
+  padding: .8rem 0 1rem;
+}
+.site-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.site-footer.pad {
+  padding: 0 1rem 1rem;
+}

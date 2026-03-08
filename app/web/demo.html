@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/web/app.css" />
+  <link rel="stylesheet" href="/web/app.css?v=20260308b" />
 </head>
 <body>
   <div class="bg-orb orb-a"></div>
@@ -17,6 +17,7 @@
     <div>
       <p class="eyebrow">Privacy Middleware for LLM Pipelines</p>
       <h1>Ollamonym Visualization Studio</h1>
+      <p class="hint">Open-source tool for privacy-preserving LLM workflows.</p>
     </div>
     <div class="top-actions">
       <a class="btn" href="/web/index.html">Back to Landing</a>
@@ -55,7 +56,7 @@
           <p id="fake-provider-note" class="hint"></p>
           <label>Token Delay (ms) <input id="token-delay" type="number" min="0" max="1000" value="30" /></label>
           <label>Text
-            <textarea id="source-text" rows="9">Jensen Huang leads NVIDIA. Contact john.doe@example.com or visit www.tech-private.com.</textarea>
+            <textarea id="source-text" rows="9">Hello Sarah,I hope you're doing well. Following our call last week, could you please send the updated contract to michael.dupont@novatech-solutions.com and cc finance@novatech solutions.com? If there are any issues, feel free to reach me directly at +1 (415) 782-4490 or on my personal line +33 6 45 78 12 90. We’re coordinating this with Novatech Solutions Ltd. Novatech's buildings address 878,venue charles , NY ,USA.</textarea>
           </label>
           <div class="row">
             <button id="run-stream" class="btn primary">Run Streaming Showcase</button>
@@ -168,7 +169,13 @@
       </div>
     </section>
   </main>
+  <footer class="site-footer pad">
+    <p>
+      Open source by
+      <a href="https://github.com/H-Ismael" target="_blank" rel="noopener noreferrer">@H-Ismael</a>.
+    </p>
+  </footer>
 
-  <script src="/web/app.js"></script>
+  <script src="/web/app.js?v=20260308b"></script>
 </body>
 </html>

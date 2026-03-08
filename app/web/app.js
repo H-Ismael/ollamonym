@@ -10,6 +10,21 @@ const state = {
 };
 
 const $ = (id) => document.getElementById(id);
+const DEFAULT_TEMPLATE_ID = "default-pii-v1";
+const TEMPLATE_DISPLAY_NAMES = {
+  "default-pii-v1": "default-pii-v1-llama-7B-q4",
+};
+
+function ensureDefaultTemplateSelection() {
+  const selectors = ["template-select", "editor-template-select", "map-template-select"];
+  for (const id of selectors) {
+    const sel = $(id);
+    if (!sel) continue;
+    if (sel.querySelector(`option[value="${DEFAULT_TEMPLATE_ID}"]`)) {
+      sel.value = DEFAULT_TEMPLATE_ID;
+    }
+  }
+}
 
 function logTimeline(msg) {
   const timeline = $("timeline");
@@ -54,13 +69,19 @@ async function loadTemplates() {
     state.templates.forEach((t) => {
       const op = document.createElement("option");
       op.value = t.template_id;
-      op.textContent = `${t.template_id} (v${t.version})`;
+      const label = TEMPLATE_DISPLAY_NAMES[t.template_id] || t.template_id;
+      op.textContent = `${label} (v${t.version})`;
       sel.append(op);
     });
+    if (state.templates.some((t) => t.template_id === DEFAULT_TEMPLATE_ID)) {
+      sel.value = DEFAULT_TEMPLATE_ID;
+    }
   }
-  if (state.templates.length && $("kpi-template")) {
-    $("kpi-template").textContent = state.templates[0].template_id;
+  if ($("kpi-template")) {
+    const preferred = state.templates.find((t) => t.template_id === DEFAULT_TEMPLATE_ID);
+    $("kpi-template").textContent = (preferred || state.templates[0] || {}).template_id || "-";
   }
+  ensureDefaultTemplateSelection();
 }
 
 function switchTab(tab) {
@@ -471,8 +492,11 @@ async function init() {
 
   await loadTemplates();
   if (state.templates.length) {
+    ensureDefaultTemplateSelection();
     await loadTemplateIntoEditor();
+    ensureDefaultTemplateSelection();
     await loadMapFromTemplate();
+    ensureDefaultTemplateSelection();
   }
 
   bindEvents();
