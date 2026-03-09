@@ -101,7 +101,13 @@ function renderMappingTable() {
   const tokens = Object.keys(state.tokenToOriginal);
   tokens.forEach((token) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${token}</td><td>${state.tokenToOriginal[token] || ""}</td><td>${state.tokenToFake[token] || ""}</td>`;
+    const tokenCell = document.createElement("td");
+    tokenCell.textContent = token;
+    const originalCell = document.createElement("td");
+    originalCell.textContent = state.tokenToOriginal[token] || "";
+    const realisticCell = document.createElement("td");
+    realisticCell.textContent = state.tokenToFake[token] || "";
+    tr.append(tokenCell, originalCell, realisticCell);
     tbody.append(tr);
   });
 
