@@ -67,6 +67,7 @@ class Detector:
         self.compiler = PromptCompiler()
         self.inference_queue = InferenceQueue(max_concurrency=self.chunk_max_parallel)
         self.alias_postpass = AliasPostPass()
+        self.llm_fake_cache: Dict[tuple[str, str], str] = {}
 
     def detect_and_anonymize(
         self,
@@ -151,11 +152,14 @@ class Detector:
             provider_map = None
             if template.replacement.pseudonym and template.replacement.pseudonym.providers:
                 provider_map = template.replacement.pseudonym.providers
-            renderer = RealisticRenderer(
-                self.pseudonym_secret,
-                request.session_id,
-                provider_map=provider_map,
-            )
+            use_llm_fake = request.fake_provider.lower() == "llm"
+            renderer = None
+            if not use_llm_fake:
+                renderer = RealisticRenderer(
+                    self.pseudonym_secret,
+                    request.session_id,
+                    provider_map=provider_map,
+                )
             token_to_fake = {}
             fake_to_token = {}
 
@@ -172,17 +176,48 @@ class Detector:
                         original,
                         template.canon,
                     )
-                    fake = renderer.generate_fake(
-                        entity_id,
-                        token_id,
-                        original=original,
-                        group_key=group_key or token_id,
-                    )
+                    if use_llm_fake:
+                        fake = self._generate_llm_fake(
+                            session_id=request.session_id,
+                            token=token,
+                            entity_id=entity_id,
+                            original=original,
+                            model=template.llm.model or None,
+                        )
+                    else:
+                        fake = renderer.generate_fake(
+                            entity_id,
+                            token_id,
+                            original=original,
+                            group_key=group_key or token_id,
+                        )
+                    if fake in fake_to_token and fake_to_token[fake] != token:
+                        fake = f"{fake}-{token_id[:3]}"
                     token_to_fake[token] = fake
                     fake_to_token[fake] = token
                     anonymized_text = anonymized_text.replace(token, fake)
 
         return anonymized_text, token_to_original, token_to_fake, fake_to_token
+
+    def _generate_llm_fake(
+        self,
+        session_id: str,
+        token: str,
+        entity_id: str,
+        original: str,
+        model: Optional[str],
+    ) -> str:
+        cache_key = (session_id, token)
+        if cache_key in self.llm_fake_cache:
+            return self.llm_fake_cache[cache_key]
+
+        fake = self.ollama.generate_fake_value(
+            entity_id=entity_id,
+            original_value=original,
+            model=model,
+        )
+        self.llm_fake_cache[cache_key] = fake
+        return fake
 
     def _extract_entities(
         self,
@@ -203,9 +238,14 @@ class Detector:
         """Extract from a single text (no chunking)."""
         system_msg = self.compiler.get_cached_system_message(template)
         user_msg = self.compiler.compile_user_message(template, text)
+        model_name = template.llm.model or None
 
         try:
-            entities = self.ollama.extract_entities(system_msg, user_msg)
+            entities = self.ollama.extract_entities(
+                system_msg,
+                user_msg,
+                model=model_name,
+            )
             return entities
         except Exception as e:
             logger.error(f"LLM extraction failed: {e}")
@@ -225,6 +265,7 @@ class Detector:
         logger.info(f"Chunked text into {len(chunks)} chunks")
 
         system_msg = self.compiler.get_cached_system_message(template)
+        model_name = template.llm.model or None
         tasks = []
 
         for idx, chunk in enumerate(chunks):
@@ -234,7 +275,11 @@ class Detector:
 
             def task_fn(system_msg=system_msg, user_msg=user_msg, idx=idx):
                 try:
-                    return self.ollama.extract_entities(system_msg, user_msg)
+                    return self.ollama.extract_entities(
+                        system_msg,
+                        user_msg,
+                        model=model_name,
+                    )
                 except Exception as e:
                     logger.error(f"LLM extraction failed for chunk {idx}: {e}")
                     raise
@@ -253,8 +298,10 @@ class Detector:
         entities: List[ExtractedEntity],
     ) -> List[ExtractedEntity]:
         """
-        Drop low-signal fragments for URL/LINK-like entity classes.
-        Example: bare 'com' emitted as LINKS should be ignored.
+        Drop low-signal structured fragments.
+        Examples:
+        - bare 'com' emitted as LINKS should be ignored
+        - EMAIL values must include '@' or '.at.' in valid email shape
         """
         filtered: List[ExtractedEntity] = []
         for entity in entities:
@@ -265,5 +312,7 @@ class Detector:
             if is_link_like:
                 if TLD_FRAGMENT_RE.fullmatch(text) and "." not in text and "/" not in text:
                     continue
+            if entity_id == "EMAIL" and not RuleExtractor.looks_like_email(text):
+                continue
             filtered.append(entity)
         return filtered

@@ -46,19 +46,15 @@ class InferenceQueue:
 
     def submit_sync(self, task: Callable[[], Any]) -> Any:
         """Synchronous submission (blocking)."""
-        loop = asyncio.new_event_loop()
-        try:
-            return loop.run_until_complete(self.submit(task))
-        finally:
-            loop.close()
+        return self.executor.submit(task).result()
 
     def run_batch_sync(self, tasks: List[Callable[[], Any]]) -> List[Any]:
         """Synchronous batch submission (blocking)."""
-        loop = asyncio.new_event_loop()
-        try:
-            return loop.run_until_complete(self.run_batch(tasks))
-        finally:
-            loop.close()
+        if not tasks:
+            return []
+
+        futures = [self.executor.submit(task) for task in tasks]
+        return [future.result() for future in futures]
 
     def shutdown(self):
         """Shutdown the executor."""

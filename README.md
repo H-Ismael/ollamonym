@@ -2,6 +2,7 @@
 
 Template-driven, session-stable anonymization and pseudonymization for teams that want to use LLM workflows while reducing data leakage risk.
 
+
 ## Why This Project Exists
 
 Most teams want LLM-powered automation, but they cannot expose raw sensitive text to third-party providers without creating legal, security, and reputational risk.
@@ -183,10 +184,47 @@ curl http://localhost:8000/health
 ### API Endpoints
 
 - `POST /v2/anonymize`
+- `POST /v2/anonymize/stream` (SSE-style stream for UI visualization)
 - `POST /v2/deanonymize`
 - `GET /v2/templates`
 - `GET /v2/templates/{template_id}`
 - `POST /v2/templates/validate`
+- `POST /v2/templates/save` (create/update custom templates)
+- `DELETE /v2/templates/{template_id}` (delete custom templates)
+- `GET /` (web UX demo)
+
+Web pages:
+- `/` -> landing page
+- `/web/demo.html` -> interactive demo studio
+
+### Compare Llama vs Qwen
+
+This repo now includes model-specific templates you can switch via `template_id`:
+
+- `default-pii-v1` (Llama baseline)
+- `default-pii-qwen2.5-7b-v1`
+- `default-pii-qwen2.5-14b-v1`
+
+Pull models in Ollama (once):
+
+```bash
+ollama pull qwen2.5:7b-instruct-q4_K_M
+ollama pull qwen2.5:14b-instruct-q4_K_M
+```
+
+Run the same text against different templates to compare extraction quality/latency:
+
+```bash
+curl -X POST http://localhost:8000/v2/anonymize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id":"bench-1",
+    "template_id":"default-pii-qwen2.5-14b-v1",
+    "text":"Jensen Huang leads NVIDIA. Contact: john.doe@example.com",
+    "render_mode":"structural",
+    "language":"auto"
+  }'
+```
 
 ## Configuration Highlights
 
@@ -236,11 +274,10 @@ Note: this reduces leakage risk materially, but final security posture still dep
 
 ### Product / UX
 
-- Web UI for:
-  - live text testing
-  - template editing
-  - rule tuning and validation
-  - side-by-side structural vs realistic preview
+- UX polish and extension for:
+  - richer live token analytics and traces
+  - collaborative template lifecycle workflows
+  - advanced policy presets by compliance profile
 
 ### Metrics and Governance
 

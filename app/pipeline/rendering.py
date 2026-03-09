@@ -20,6 +20,8 @@ class RealisticRenderer:
         "ORG": "company",
         "EMAIL": "email",
         "PHONE": "phone_number",
+        "ADDRESS": "street_address",
+        "LOCATION": "city",
     }
 
     def __init__(
@@ -80,7 +82,7 @@ class RealisticRenderer:
         if view_cache_key in self.view_fake_cache:
             return self.view_fake_cache[view_cache_key]
 
-        provider = self.provider_map.get(entity_id, "word")
+        provider = self.provider_map.get(entity_id, self._fallback_provider(entity_id, original or ""))
         faker = Faker()
         group_cache_key = (entity_id, effective_group_key)
         base_fake = self.group_fake_cache.get(group_cache_key)
@@ -169,6 +171,31 @@ class RealisticRenderer:
     @staticmethod
     def _looks_like_domain_fragment(text: str) -> bool:
         return bool(re.match(r"^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", text))
+
+    @staticmethod
+    def _fallback_provider(entity_id: str, original: str) -> str:
+        eid = entity_id.upper()
+        if "ADDR" in eid or "LOCAT" in eid:
+            return "street_address"
+        if "CITY" in eid:
+            return "city"
+        if "ZIP" in eid or "POST" in eid:
+            return "postcode"
+        if "COUNTRY" in eid:
+            return "country"
+        if "MAIL" in eid:
+            return "email"
+        if "PHONE" in eid or "TEL" in eid:
+            return "phone_number"
+        if "ORG" in eid or "COMP" in eid:
+            return "company"
+        if "PERSON" in eid or "NAME" in eid:
+            return "name"
+        if "LINK" in eid or "URL" in eid:
+            return "url"
+        if original and "@" in original:
+            return "email"
+        return "word"
 
     def _generate_link_like_fake(self, original: str, seed: int) -> str:
         """Generate deterministic realistic URL/domain-like fakes."""
