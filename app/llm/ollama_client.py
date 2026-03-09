@@ -281,3 +281,32 @@ class OllamaClient:
     def close(self):
         """Close the HTTP client."""
         self.client.close()
+
+    def generate_fake_value(
+        self,
+        entity_id: str,
+        original_value: str,
+        model: Optional[str] = None,
+    ) -> str:
+        """
+        Generate a realistic fake value using the LLM.
+        This is slower than Faker and intended as an optional UX/demo feature.
+        """
+        system_message = (
+            "You generate privacy-safe pseudonyms. "
+            "Return only one fake value, no explanation, no quotes."
+        )
+        user_message = (
+            f"Entity type: {entity_id}\n"
+            f"Original: {original_value}\n"
+            "Constraints:\n"
+            "- Keep the same semantic shape and language style\n"
+            "- Keep similar format (email-like stays email-like, address-like stays address-like)\n"
+            "- Do not copy any exact sensitive token from original\n"
+            "- Output a single line only"
+        )
+        output = self._chat(system_message, user_message, model=model).strip()
+        cleaned = " ".join(output.replace("\n", " ").split())
+        if not cleaned:
+            raise ValueError("LLM fake generation returned empty output")
+        return cleaned

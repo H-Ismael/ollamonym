@@ -1,13 +1,21 @@
 """FastAPI application and endpoints."""
 
+import asyncio
+import json
 import logging
+import re
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import AsyncGenerator
 
 import httpx
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Body, FastAPI, HTTPException, status
+from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from app import config
 from app.schemas.models import (
+    AnonymizeStreamRequest,
     AnonymizeRequest,
     AnonymizeResponse,
     AnonymizationMapping,
@@ -16,6 +24,9 @@ from app.schemas.models import (
     DeanonymizeResponse,
     TemplatesListResponse,
     TemplateInfo,
+    TemplateSchema,
+    TemplateSaveResponse,
+    TemplateDeleteResponse,
     TemplateValidationResult,
 )
 from app.templates.registry import TemplateRegistry
@@ -30,6 +41,9 @@ logger = logging.getLogger(__name__)
 template_registry: TemplateRegistry = None
 ollama_client: OllamaClient = None
 detector: Detector = None
+TEMPLATE_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+PROTECTED_TEMPLATE_PREFIX = "default-"
+WEB_ROOT = Path(__file__).parent / "web"
 
 
 @asynccontextmanager
@@ -95,6 +109,26 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+if WEB_ROOT.exists():
+    app.mount("/web", StaticFiles(directory=str(WEB_ROOT)), name="web")
+
+
+def _is_protected_template(template_id: str) -> bool:
+    return template_id.startswith(PROTECTED_TEMPLATE_PREFIX)
+
+
+def _assert_editable_template_id(template_id: str) -> None:
+    if _is_protected_template(template_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Template '{template_id}' is protected and cannot be modified in-place.",
+        )
+    if not TEMPLATE_ID_PATTERN.match(template_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="template_id must match ^[a-z0-9][a-z0-9._-]*$",
+        )
+
 
 # ============================================================================
 # Health Check
@@ -105,6 +139,17 @@ app = FastAPI(
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
+
+
+@app.get("/", tags=["UI"])
+async def root_ui():
+    """Serve the UX demo."""
+    if not WEB_ROOT.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Web UI assets are missing.",
+        )
+    return RedirectResponse(url="/web/index.html")
 
 
 # ============================================================================
@@ -146,6 +191,7 @@ async def anonymize(request: AnonymizeRequest):
                 template_id=request.template_id,
                 template_version=template.version,
                 render_mode=request.render_mode,
+                fake_provider=request.fake_provider,
                 model_runtime=model_runtime_info,
             ),
         )
@@ -185,6 +231,96 @@ async def anonymize(request: AnonymizeRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         )
+
+
+@app.post("/v2/anonymize/stream", tags=["Anonymization"])
+async def anonymize_stream(request: AnonymizeStreamRequest):
+    """Stream showcase events: structured first, then realistic output."""
+    if not template_registry.template_exists(request.template_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Template not found: {request.template_id}",
+        )
+
+    async def _sse() -> AsyncGenerator[str, None]:
+        def _evt(event: str, data: dict) -> str:
+            payload = json.dumps(data, ensure_ascii=False)
+            return f"event: {event}\ndata: {payload}\n\n"
+
+        try:
+            yield _evt(
+                "phase",
+                {"phase": "start", "template_id": request.template_id, "session_id": request.session_id},
+            )
+
+            structural_req = AnonymizeRequest(
+                session_id=request.session_id,
+                template_id=request.template_id,
+                text=request.text,
+                render_mode="structural",
+                language=request.language,
+            )
+            structured_text, token_to_orig, _, _ = detector.detect_and_anonymize(structural_req)
+            tokens = re.findall(r"\S+\s*", structured_text)
+            current = ""
+            for token in tokens:
+                current += token
+                yield _evt(
+                    "structured_token",
+                    {"token": token, "text_so_far": current, "length": len(current)},
+                )
+                if request.token_delay_ms:
+                    await asyncio.sleep(request.token_delay_ms / 1000.0)
+            yield _evt(
+                "structured_done",
+                {
+                    "anonymized_text": structured_text,
+                    "mapping": token_to_orig,
+                },
+            )
+
+            realistic_req = AnonymizeRequest(
+                session_id=request.session_id,
+                template_id=request.template_id,
+                text=request.text,
+                render_mode="realistic",
+                fake_provider=request.fake_provider,
+                language=request.language,
+            )
+            realistic_text, _, token_to_fake, fake_to_token = detector.detect_and_anonymize(realistic_req)
+            realistic_tokens = re.findall(r"\S+\s*", realistic_text)
+            realistic_current = ""
+            for token in realistic_tokens:
+                realistic_current += token
+                yield _evt(
+                    "realistic_token",
+                    {"token": token, "text_so_far": realistic_current, "length": len(realistic_current)},
+                )
+                if request.token_delay_ms:
+                    await asyncio.sleep(request.token_delay_ms / 1000.0)
+            yield _evt(
+                "realistic_done",
+                {
+                    "anonymized_text": realistic_text,
+                    "token_to_fake": token_to_fake or {},
+                    "fake_to_token": fake_to_token or {},
+                },
+            )
+
+            yield _evt("done", {"ok": True})
+        except Exception as e:
+            logger.error("Streaming error: %s", e, exc_info=True)
+            yield _evt("error", {"detail": str(e)})
+
+    return StreamingResponse(
+        _sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.post("/v2/deanonymize", response_model=DeanonymizeResponse, tags=["Anonymization"])
@@ -268,6 +404,53 @@ async def validate(template_data: dict):
             valid=False,
             errors=[str(e)],
         )
+
+
+@app.post("/v2/templates/save", response_model=TemplateSaveResponse, tags=["Templates"])
+async def save_template(template_data: dict = Body(...)):
+    """Create or overwrite a custom template on disk."""
+    try:
+        template = TemplateSchema(**template_data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid template payload: {e}",
+        )
+
+    _assert_editable_template_id(template.template_id)
+    valid, errors = validate_template(template)
+    if not valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"errors": errors},
+        )
+
+    template_path = config.TEMPLATES_DIR / f"{template.template_id}.json"
+    template_path.write_text(template.model_dump_json(indent=2), encoding="utf-8")
+    template_registry.reload()
+
+    return TemplateSaveResponse(
+        template_id=template.template_id,
+        version=template.version,
+        description=template.description,
+        protected=False,
+    )
+
+
+@app.delete("/v2/templates/{template_id}", response_model=TemplateDeleteResponse, tags=["Templates"])
+async def delete_template(template_id: str):
+    """Delete a custom template from disk."""
+    _assert_editable_template_id(template_id)
+    template_path = config.TEMPLATES_DIR / f"{template_id}.json"
+    if not template_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Template not found: {template_id}",
+        )
+
+    template_path.unlink()
+    template_registry.reload()
+    return TemplateDeleteResponse(detail=f"Deleted template: {template_id}")
 
 
 if __name__ == "__main__":

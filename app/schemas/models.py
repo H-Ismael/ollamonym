@@ -19,6 +19,10 @@ class AnonymizeRequest(BaseModel):
         "structural",
         description="'structural' (placeholders only) or 'realistic' (with fake names)"
     )
+    fake_provider: str = Field(
+        "faker",
+        description="'faker' (fast deterministic) or 'llm' (slower, higher-latency realistic fakes)"
+    )
     language: str = Field("auto", description="Language hint: 'auto', 'en', 'fr', 'ar'")
 
 
@@ -47,6 +51,7 @@ class MappingMetadata(BaseModel):
     template_id: str
     template_version: int
     render_mode: str
+    fake_provider: Optional[str] = None
     model_runtime: Optional[ModelRuntimeInfo] = None
 
 
@@ -200,6 +205,39 @@ class TemplateValidationResult(BaseModel):
 
     valid: bool
     errors: List[str] = Field(default_factory=list, description="Validation errors if any")
+
+
+class TemplateSaveResponse(BaseModel):
+    """Response after creating/updating a template."""
+
+    template_id: str
+    version: int
+    description: str
+    protected: bool = Field(
+        False, description="Whether the template is protected from in-place edits"
+    )
+
+
+class TemplateDeleteResponse(BaseModel):
+    """Response after deleting a template."""
+
+    detail: str
+
+
+class AnonymizeStreamRequest(BaseModel):
+    """Request for streaming anonymization visualization."""
+
+    session_id: str = Field(..., description="Session identifier for stability")
+    template_id: str = Field(..., description="Template ID to use")
+    text: str = Field(..., description="Text to anonymize")
+    fake_provider: str = Field(
+        "faker",
+        description="'faker' (fast deterministic) or 'llm' (slower, higher-latency realistic fakes)"
+    )
+    language: str = Field("auto", description="Language hint: 'auto', 'en', 'fr', 'ar'")
+    token_delay_ms: int = Field(
+        25, ge=0, le=1000, description="Artificial delay between streamed tokens"
+    )
 
 
 # ============================================================================
