@@ -5,7 +5,8 @@ from pathlib import Path
 
 # Paths
 TEMPLATES_DIR = Path(os.getenv("TEMPLATES_DIR", "./templates"))
-TEMPLATES_DIR.mkdir(exist_ok=True)
+CUSTOM_TEMPLATES_DIR = Path(os.getenv("CUSTOM_TEMPLATES_DIR", "./data/templates"))
+CUSTOM_TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 
 # Secrets (required)
 PSEUDONYM_SECRET = os.getenv("PSEUDONYM_SECRET")
