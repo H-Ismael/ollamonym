@@ -18,6 +18,25 @@ In short: **LLM utility without shipping raw private identifiers by default**.
 
 A practical positioning for teams under GDPR/compliance pressure: **pseudonymization is often more useful than hard redaction/anonymization for LLM workflows**, because it preserves semantic continuity and referential meaning across long or distant queries while still reducing direct identifier exposure.
 
+## Where Sensitive Text Blocks Frontier Corporate LLM Adoption
+
+Many enterprise teams already have valid LLM use cases, but security/legal controls prevent sending raw text to external model providers. Typical blocked scenarios:
+
+- **Customer support and CRM copilots**: ticket bodies include names, emails, phones, and addresses.
+- **Sales and customer success assistants**: notes include account identifiers, contract values, and personal contacts.
+- **Legal contract analysis**: drafts expose counterparties, clauses, obligations, and signatures.
+- **Healthcare/insurance operations**: notes and claims can contain direct identifiers and case-sensitive details.
+- **Security/SOC workflows**: incident narratives may include user IDs, endpoints, and internal infrastructure references.
+- **Internal knowledge assistants**: enterprise docs frequently contain confidential project, vendor, or employee data.
+
+This creates a common enterprise bottleneck: product teams want frontier-model quality, while governance teams require strong controls on sensitive text exposure.
+
+ollamonym is designed to be the privacy middleware layer that resolves this tension:
+
+- Transform sensitive entities before model calls.
+- Preserve enough semantic structure to keep LLM output useful.
+- Keep deanonymization controlled and reversible only where authorized.
+
 ## Core Value Proposition
 
 - **Leakage-risk reduction**: sensitive fields are transformed before downstream processing.
@@ -52,6 +71,9 @@ A practical positioning for teams under GDPR/compliance pressure: **pseudonymiza
   - Response metadata includes requested/resolved model and quantization info.
 - **Dockerized Deployment**
   - FastAPI + Ollama stack with persistent model volume.
+
+## **Caution** :
+[!CAUTION] Several components of this project were generated and or refactored via agentic AI. Tests were set but caution is required. 
 
 ## High-Level Architecture
 
@@ -289,6 +311,7 @@ Note: this reduces leakage risk materially, but final security posture still dep
 
 ### Platform Evolution
 
+- Test on premise servers (better hardware) for detection accuracy, generation fidelity when llm faker is enabled and latency evaluation.
 - Pluggable provider strategies for advanced fake generation by entity family
 - Multi-tenant policy isolation
 - Optional external session memory (e.g., Redis) for horizontal scale

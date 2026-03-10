@@ -360,6 +360,24 @@ td {
   flex-wrap: wrap;
 }
 
+.hero-proof {
+  margin-top: 0.95rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.hero-proof p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.hero-proof p + p {
+  margin-top: 0.35rem;
+}
+
 .signal-line {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -391,6 +409,84 @@ td {
 
 @media (min-width: 900px) {
   .hero-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.usecase-section {
+  margin: 1.4rem 0 0.9rem;
+}
+
+.usecase-section h2 {
+  margin: 0.35rem 0 0.9rem;
+  max-width: 28ch;
+  line-height: 1.2;
+}
+
+.usecase-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+.usecase-card {
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.usecase-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.15), transparent 34%);
+}
+
+.usecase-card h3 {
+  margin-bottom: 0.25rem;
+}
+
+.usecase-card p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.demo-rail {
+  padding: 0 1rem 1rem;
+}
+
+.demo-rail-card {
+  margin: 0;
+  border-radius: 16px;
+  border-color: var(--line-strong);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.42));
+}
+
+.demo-rail-card h2 {
+  margin-top: 0.2rem;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  max-width: 34ch;
+}
+
+.demo-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.demo-tags span {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.77rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+@media (min-width: 850px) {
+  .usecase-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .site-footer {
