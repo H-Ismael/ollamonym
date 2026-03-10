@@ -140,16 +140,21 @@
             <label>Instruction (required)
               <input id="quick-entity-instructions" placeholder="What should the model detect?" />
             </label>
-            <label>Positive Example (optional)
-              <input id="quick-entity-example" placeholder="e.g. SKU-AX19-7781" />
+            <label>Provider (optional)
+              <input id="quick-entity-provider" placeholder="e.g. company, email, name" />
+            </label>
+          </div>
+          <div class="grid-two">
+            <label>Positive Examples (required, one per line)
+              <textarea id="quick-entity-positive-examples" rows="4" placeholder="SKU-AX19-7781&#10;SKU-BX22-9931"></textarea>
+            </label>
+            <label>Negative Examples (required, one per line)
+              <textarea id="quick-entity-negative-examples" rows="4" placeholder="unknown code&#10;tracking label"></textarea>
             </label>
           </div>
           <div class="row">
             <label class="inline-check"><input id="quick-entity-enable" type="checkbox" checked /> Enabled</label>
             <label class="inline-check"><input id="quick-entity-add-postpass" type="checkbox" checked /> Include in alias post-pass</label>
-            <label>Provider (optional)
-              <input id="quick-entity-provider" placeholder="e.g. company, email, name" />
-            </label>
             <button id="add-entity-quick" class="btn primary">Add Entity</button>
           </div>
           <p class="hint">Need full control? Use the JSON Editor section for advanced editing.</p>

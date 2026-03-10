@@ -237,16 +237,24 @@ function parseEditorTemplate() {
   return JSON.parse($("template-json").value);
 }
 
+function parseExampleList(value) {
+  return value
+    .split(/\r?\n|,/)
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
 function addEntityFromQuickForm() {
   const idRaw = $("quick-entity-id").value.trim();
   const instructions = $("quick-entity-instructions").value.trim();
-  const positiveExample = $("quick-entity-example").value.trim();
+  const positiveExamples = parseExampleList($("quick-entity-positive-examples").value);
+  const negativeExamples = parseExampleList($("quick-entity-negative-examples").value);
   const provider = $("quick-entity-provider").value.trim();
   const enabled = $("quick-entity-enable").checked;
   const addToPostpass = $("quick-entity-add-postpass").checked;
 
-  if (!idRaw || !instructions) {
-    throw new Error("Entity ID and Instruction are required.");
+  if (!idRaw || !instructions || !positiveExamples.length || !negativeExamples.length) {
+    throw new Error("Entity ID, Instruction, Positive Examples, and Negative Examples are required.");
   }
 
   const id = idRaw.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
@@ -261,10 +269,11 @@ function addEntityFromQuickForm() {
     id,
     enabled,
     instructions,
+    examples: {
+      positive: positiveExamples,
+      negative: negativeExamples,
+    },
   };
-  if (positiveExample) {
-    entity.examples = { positive: [positiveExample], negative: [] };
-  }
   tmpl.entities.push(entity);
 
   if (addToPostpass) {
@@ -288,7 +297,8 @@ function addEntityFromQuickForm() {
 
   $("quick-entity-id").value = "";
   $("quick-entity-instructions").value = "";
-  $("quick-entity-example").value = "";
+  $("quick-entity-positive-examples").value = "";
+  $("quick-entity-negative-examples").value = "";
   $("quick-entity-provider").value = "";
   $("quick-entity-enable").checked = true;
   $("quick-entity-add-postpass").checked = true;

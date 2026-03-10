@@ -930,6 +930,46 @@ class TestLLMFakeProvider:
         assert "Alex Stone" in token_to_fake.values()
         mock_ollama.generate_fake_value.assert_called()
 
+    def test_llm_fake_provider_preserves_alias_part_transfer(self, template_registry):
+        mock_ollama = Mock()
+        mock_ollama.extract_entities.side_effect = [
+            [ExtractedEntity(entity_id="ORG", text="Novatec Inc")],
+            [ExtractedEntity(entity_id="ORG", text="Novatec")],
+        ]
+        mock_ollama.generate_fake_value.return_value = "Blue Harbor LLC"
+
+        detector = Detector(
+            template_registry=template_registry,
+            ollama_client=mock_ollama,
+            pseudonym_secret="test-secret",
+            chunking_enabled=False,
+        )
+
+        req1 = AnonymizeRequest(
+            session_id="s-llm-alias",
+            template_id="test-pii",
+            text="Novatec Inc released guidance.",
+            render_mode="realistic",
+            fake_provider="llm",
+            language="auto",
+        )
+        req2 = AnonymizeRequest(
+            session_id="s-llm-alias",
+            template_id="test-pii",
+            text="Novatec confirmed the timeline.",
+            render_mode="realistic",
+            fake_provider="llm",
+            language="auto",
+        )
+
+        _, _, token_to_fake_1, _ = detector.detect_and_anonymize(req1)
+        _, _, token_to_fake_2, _ = detector.detect_and_anonymize(req2)
+
+        full_name_fake = next(iter(token_to_fake_1.values()))
+        alias_fake = next(iter(token_to_fake_2.values()))
+        assert alias_fake in full_name_fake.split()
+        assert mock_ollama.generate_fake_value.call_count == 1
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
