@@ -252,6 +252,8 @@ curl -X POST http://localhost:8000/v2/anonymize \
 
 Important env vars:
 
+- `TEMPLATES_DIR` (bundled/read-only templates source)
+- `CUSTOM_TEMPLATES_DIR` (writable directory for create/update/delete template APIs)
 - `OLLAMA_BASE_URL`
 - `OLLAMA_FALLBACK_URLS`
 - `LLM_MODEL`

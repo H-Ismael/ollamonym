@@ -53,7 +53,9 @@ async def lifespan(app: FastAPI):
 
     # Startup
     logger.info("Starting up PII Anonymizer Service v2")
-    template_registry = TemplateRegistry(config.TEMPLATES_DIR)
+    template_registry = TemplateRegistry(
+        config.TEMPLATES_DIR, config.CUSTOM_TEMPLATES_DIR
+    )
     ollama_client = OllamaClient(
         config.OLLAMA_BASE_URL,
         config.LLM_MODEL,
@@ -425,7 +427,7 @@ async def save_template(template_data: dict = Body(...)):
             detail={"errors": errors},
         )
 
-    template_path = config.TEMPLATES_DIR / f"{template.template_id}.json"
+    template_path = config.CUSTOM_TEMPLATES_DIR / f"{template.template_id}.json"
     template_path.write_text(template.model_dump_json(indent=2), encoding="utf-8")
     template_registry.reload()
 
@@ -441,7 +443,7 @@ async def save_template(template_data: dict = Body(...)):
 async def delete_template(template_id: str):
     """Delete a custom template from disk."""
     _assert_editable_template_id(template_id)
-    template_path = config.TEMPLATES_DIR / f"{template_id}.json"
+    template_path = config.CUSTOM_TEMPLATES_DIR / f"{template_id}.json"
     if not template_path.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
