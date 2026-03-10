@@ -237,6 +237,63 @@ function parseEditorTemplate() {
   return JSON.parse($("template-json").value);
 }
 
+function addEntityFromQuickForm() {
+  const idRaw = $("quick-entity-id").value.trim();
+  const instructions = $("quick-entity-instructions").value.trim();
+  const positiveExample = $("quick-entity-example").value.trim();
+  const provider = $("quick-entity-provider").value.trim();
+  const enabled = $("quick-entity-enable").checked;
+  const addToPostpass = $("quick-entity-add-postpass").checked;
+
+  if (!idRaw || !instructions) {
+    throw new Error("Entity ID and Instruction are required.");
+  }
+
+  const id = idRaw.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+  const tmpl = parseEditorTemplate();
+  tmpl.entities = tmpl.entities || [];
+
+  if (tmpl.entities.some((e) => e.id === id)) {
+    throw new Error(`Entity ID already exists: ${id}`);
+  }
+
+  const entity = {
+    id,
+    enabled,
+    instructions,
+  };
+  if (positiveExample) {
+    entity.examples = { positive: [positiveExample], negative: [] };
+  }
+  tmpl.entities.push(entity);
+
+  if (addToPostpass) {
+    tmpl.postpass_alias = tmpl.postpass_alias || {};
+    tmpl.postpass_alias.enabled = true;
+    tmpl.postpass_alias.entity_ids = Array.from(
+      new Set([...(tmpl.postpass_alias.entity_ids || []), id])
+    );
+  }
+
+  if (provider) {
+    tmpl.replacement = tmpl.replacement || {};
+    tmpl.replacement.pseudonym = tmpl.replacement.pseudonym || {};
+    tmpl.replacement.pseudonym.providers = tmpl.replacement.pseudonym.providers || {};
+    tmpl.replacement.pseudonym.providers[id] = provider;
+  }
+
+  $("template-json").value = JSON.stringify(tmpl, null, 2);
+  loadRuleControls();
+  setStatus("template-status", `Added entity ${id}.`, true);
+
+  $("quick-entity-id").value = "";
+  $("quick-entity-instructions").value = "";
+  $("quick-entity-example").value = "";
+  $("quick-entity-provider").value = "";
+  $("quick-entity-enable").checked = true;
+  $("quick-entity-add-postpass").checked = true;
+}
+
 async function loadTemplateIntoEditor() {
   const id = $("editor-template-select").value;
   const data = await api(`/v2/templates/${id}`);
@@ -418,6 +475,13 @@ function bindEvents() {
   });
 
   $("load-template").addEventListener("click", loadTemplateIntoEditor);
+  $("add-entity-quick").addEventListener("click", () => {
+    try {
+      addEntityFromQuickForm();
+    } catch (e) {
+      setStatus("template-status", e.message, false);
+    }
+  });
   $("validate-template").addEventListener("click", async () => {
     try {
       await validateEditorTemplate();

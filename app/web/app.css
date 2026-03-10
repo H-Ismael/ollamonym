@@ -194,6 +194,30 @@ table {
   margin: 0.45rem 0;
 }
 
+.entity-quick-add {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.8rem;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.inline-check input {
+  width: auto;
+  margin: 0;
+}
+
 .btn {
   border: 1px solid var(--line);
   border-radius: 8px;
