@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/web/app.css?v=20260310-ui2" />
+  <link rel="stylesheet" href="/web/app.css?v=20260310-ui3" />
 </head>
 <body>
   <div class="bg-orb orb-a"></div>
@@ -129,7 +129,37 @@
 
     <section class="panel" id="panel-templates">
       <div class="card">
-        <h2>Template JSON Editor</h2>
+        <h2>Template Studio</h2>
+        <p class="hint">Default flow: add entities with the simple form. For advanced fields, use the JSON Editor section below.</p>
+        <div class="entity-quick-add">
+          <h3>Add New Entity</h3>
+          <div class="grid-three">
+            <label>Entity ID (required)
+              <input id="quick-entity-id" placeholder="e.g. PRODUCT_CODE" />
+            </label>
+            <label>Instruction (required)
+              <input id="quick-entity-instructions" placeholder="What should the model detect?" />
+            </label>
+            <label>Provider (optional)
+              <input id="quick-entity-provider" placeholder="e.g. company, email, name" />
+            </label>
+          </div>
+          <div class="grid-two">
+            <label>Positive Examples (required, one per line)
+              <textarea id="quick-entity-positive-examples" rows="4" placeholder="SKU-AX19-7781&#10;SKU-BX22-9931"></textarea>
+            </label>
+            <label>Negative Examples (required, one per line)
+              <textarea id="quick-entity-negative-examples" rows="4" placeholder="unknown code&#10;tracking label"></textarea>
+            </label>
+          </div>
+          <div class="row">
+            <label class="inline-check"><input id="quick-entity-enable" type="checkbox" checked /> Enabled</label>
+            <label class="inline-check"><input id="quick-entity-add-postpass" type="checkbox" checked /> Include in alias post-pass</label>
+            <button id="add-entity-quick" class="btn primary">Add Entity</button>
+          </div>
+          <p class="hint">Need full control? Use the JSON Editor section for advanced editing.</p>
+        </div>
+        <h3>JSON Editor (Advanced)</h3>
         <div class="row">
           <label>Load Template <select id="editor-template-select"></select></label>
           <button id="load-template" class="btn">Load</button>
@@ -190,6 +220,6 @@
     </p>
   </footer>
 
-  <script src="/web/app.js?v=20260310-ui1"></script>
+  <script src="/web/app.js?v=20260310-ui2"></script>
 </body>
 </html>
