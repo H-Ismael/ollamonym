@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="app/web/img_assets/ollamonym_nocap.png" alt="Ollamonym" width="560" />
+</p>
+
 # ollamonym
 
 Template-driven, session-stable anonymization and pseudonymization for teams that want to use LLM workflows while reducing data leakage risk.
