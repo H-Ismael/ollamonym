@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/web/app.css?v=20260308b" />
+  <link rel="stylesheet" href="/web/app.css?v=20260310-ui6" />
 </head>
 <body class="landing-body">
   <div class="bg-orb orb-a"></div>
@@ -15,12 +15,16 @@
 
   <main class="landing-wrap">
     <section class="hero-card">
+      <div class="hero-brand">
+        <img src="/web/img_assets/ollamonym_nocap.png" alt="Ollamonym logo" />
+      </div>
       <p class="eyebrow">Privacy Middleware for LLM Pipelines</p>
-      <h1>Use LLMs Without Sending Raw Sensitive Data by Default</h1>
+      <h1>Ship Frontier LLM Workflows Without Exposing Raw Sensitive Text</h1>
       <p class="hero-copy">
-        Ollamonym detects sensitive entities, transforms them into reversible pseudonyms, and preserves semantic continuity for downstream AI tasks.
+        Ollamonym sits between your data and the model: detect sensitive entities, pseudonymize deterministically, and preserve context so enterprise teams can actually deploy AI in production.
       </p>
       <div class="hero-badges">
+        <span>Frontier-LLM Ready</span>
         <span>Open Source</span>
         <span>MIT Licensed</span>
         <span>Reversible</span>
@@ -31,6 +35,10 @@
       <div class="hero-cta">
         <a class="btn primary" href="/web/demo.html">Enter Live Demo</a>
         <a class="btn" href="/docs" target="_blank" rel="noopener noreferrer">API Docs</a>
+      </div>
+      <div class="hero-proof">
+        <p><strong>Security teams say:</strong> "Do not send raw customer data to model providers."</p>
+        <p><strong>Product teams need:</strong> summarization, routing, copilots, and search over real business text.</p>
       </div>
       <div class="signal-line" aria-hidden="true">
         <span></span><span></span><span></span><span></span>
@@ -51,9 +59,32 @@
         <p>Tune entity classes, alias rules, and fake providers through JSON templates, not pipeline rewrites.</p>
       </article>
     </section>
+
+    <section class="usecase-section">
+      <p class="eyebrow">Where Teams Get Blocked Today</p>
+      <h2>Sensitive Text Is Often the Last Barrier to Frontier Corporate LLMs</h2>
+      <div class="usecase-grid">
+        <article class="card usecase-card">
+          <h3>Support and CRM Summaries</h3>
+          <p>Tickets include names, phones, emails, addresses, and account references. Without a privacy layer, legal and security often block external model usage.</p>
+        </article>
+        <article class="card usecase-card">
+          <h3>Contract and Legal Review</h3>
+          <p>Drafts contain client identities, obligations, and commercial terms. Teams want clause extraction and QA, but raw uploads are restricted.</p>
+        </article>
+        <article class="card usecase-card">
+          <h3>Healthcare and Insurance Ops</h3>
+          <p>Case notes and claims text can contain direct identifiers. Operational AI is delayed unless data is transformed before model calls.</p>
+        </article>
+        <article class="card usecase-card">
+          <h3>Internal Copilots for Analysts</h3>
+          <p>Analysts need LLM help on sensitive emails, incidents, and audit notes. Pseudonymization enables utility while reducing direct exposure risk.</p>
+        </article>
+      </div>
+    </section>
     <footer class="site-footer">
       <p>
-        Built as an open-source project by
+        Built for an open-source project experimentation 
         <a href="https://github.com/H-Ismael" target="_blank" rel="noopener noreferrer">@H-Ismael</a>.
       </p>
     </footer>

@@ -7,6 +7,7 @@ services:
       - "8000:8000"
     environment:
       - TEMPLATES_DIR=/app/templates
+      - CUSTOM_TEMPLATES_DIR=/app/data/templates
       - PSEUDONYM_SECRET=${PSEUDONYM_SECRET:-your-secret-key-change-me}
       - DEFAULT_TEMPLATE_ID=default-pii-v1
       - OLLAMA_BASE_URL=http://ollama:11434
@@ -25,6 +26,7 @@ services:
       - TOKEN_ID_LEN=6
     volumes:
       - ./templates:/app/templates:ro
+      - ./data/templates:/app/data/templates
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

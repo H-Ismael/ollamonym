@@ -68,6 +68,7 @@ class Detector:
         self.inference_queue = InferenceQueue(max_concurrency=self.chunk_max_parallel)
         self.alias_postpass = AliasPostPass()
         self.llm_fake_cache: Dict[tuple[str, str], str] = {}
+        self.llm_group_fake_cache: Dict[tuple[str, str, str], str] = {}
 
     def detect_and_anonymize(
         self,
@@ -182,6 +183,7 @@ class Detector:
                             token=token,
                             entity_id=entity_id,
                             original=original,
+                            group_key=group_key or token_id,
                             model=template.llm.model or None,
                         )
                     else:
@@ -205,17 +207,29 @@ class Detector:
         token: str,
         entity_id: str,
         original: str,
+        group_key: str,
         model: Optional[str],
     ) -> str:
         cache_key = (session_id, token)
         if cache_key in self.llm_fake_cache:
             return self.llm_fake_cache[cache_key]
 
-        fake = self.ollama.generate_fake_value(
-            entity_id=entity_id,
-            original_value=original,
-            model=model,
+        group_cache_key = (
+            session_id,
+            entity_id,
+            group_key.strip().casefold(),
         )
+        base_fake = self.llm_group_fake_cache.get(group_cache_key)
+        if base_fake is None:
+            base_fake = self.ollama.generate_fake_value(
+                entity_id=entity_id,
+                original_value=group_key,
+                model=model,
+            )
+            self.llm_group_fake_cache[group_cache_key] = base_fake
+
+        projector = RealisticRenderer(self.pseudonym_secret, session_id)
+        fake = projector._project_group_fake(entity_id, original, group_key, base_fake)
         self.llm_fake_cache[cache_key] = fake
         return fake
 
