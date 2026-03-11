@@ -76,7 +76,7 @@ ollamonym is designed to be the privacy middleware layer that resolves this tens
 - **Dockerized Deployment**
   - FastAPI + Ollama stack with persistent model volume.
 
-## >[!WARNING] **Caution** :
+> ## [!WARNING] **Caution** :
 Several components of this project were generated and or refactored via agentic AI. Tests were set but caution is required. 
 
 ## High-Level Architecture
