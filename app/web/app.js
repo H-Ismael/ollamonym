@@ -250,11 +250,20 @@ function addEntityFromQuickForm() {
   const positiveExamples = parseExampleList($("quick-entity-positive-examples").value);
   const negativeExamples = parseExampleList($("quick-entity-negative-examples").value);
   const provider = $("quick-entity-provider").value.trim();
+  const entityFakeProvider = $("quick-entity-fake-provider").value.trim().toLowerCase();
+  const pseudoEntities = parseExampleList($("quick-entity-pseudo-entities").value);
+  const usePseudoEntities = $("quick-entity-use-pseudo").checked;
   const enabled = $("quick-entity-enable").checked;
   const addToPostpass = $("quick-entity-add-postpass").checked;
 
   if (!idRaw || !instructions || !positiveExamples.length || !negativeExamples.length) {
     throw new Error("Entity ID, Instruction, Positive Examples, and Negative Examples are required.");
+  }
+  if (usePseudoEntities && !pseudoEntities.length) {
+    throw new Error("Pseudo-entities are required when 'Use pseudo-entities list' is checked.");
+  }
+  if (entityFakeProvider && !["faker", "llm"].includes(entityFakeProvider)) {
+    throw new Error("Fake strategy must be 'faker' or 'llm'.");
   }
 
   const id = idRaw.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
@@ -274,6 +283,13 @@ function addEntityFromQuickForm() {
       negative: negativeExamples,
     },
   };
+  if (entityFakeProvider) {
+    entity.fake_provider = entityFakeProvider;
+  }
+  if (usePseudoEntities) {
+    entity.use_pseudo_entities = true;
+    entity.pseudo_entities = pseudoEntities;
+  }
   tmpl.entities.push(entity);
 
   if (addToPostpass) {
@@ -300,6 +316,9 @@ function addEntityFromQuickForm() {
   $("quick-entity-positive-examples").value = "";
   $("quick-entity-negative-examples").value = "";
   $("quick-entity-provider").value = "";
+  $("quick-entity-fake-provider").value = "";
+  $("quick-entity-pseudo-entities").value = "";
+  $("quick-entity-use-pseudo").checked = false;
   $("quick-entity-enable").checked = true;
   $("quick-entity-add-postpass").checked = true;
 }

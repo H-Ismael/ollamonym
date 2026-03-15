@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="app/web/img_assets/ollamonym_nocap.png" alt="Ollamonym" width="560" />
+  <img src="app/web/img_assets/ollamonym_logo.svg" alt="ØllamØnym" width="560" />
 </p>
 
-# ollamonym
+# ØllamØnym
 
 Template-driven, session-stable anonymization and pseudonymization for teams that want to use LLM workflows while reducing data leakage risk.
 
@@ -11,7 +11,7 @@ Template-driven, session-stable anonymization and pseudonymization for teams tha
 
 Most teams want LLM-powered automation, but they cannot expose raw sensitive text to third-party providers without creating legal, security, and reputational risk.
 
-ollamonym gives you a practical middle path:
+ØllamØnym gives you a practical middle path:
 
 - Detect sensitive entities locally
 - Replace them deterministically with reversible tokens
@@ -22,7 +22,9 @@ In short: **LLM utility without shipping raw private identifiers by default**.
 
 A practical positioning for teams under GDPR/compliance pressure: **pseudonymization is often more useful than hard redaction/anonymization for LLM workflows**, because it preserves semantic continuity and referential meaning across long or distant queries while still reducing direct identifier exposure.
 
-## Where Sensitive Text Blocks Frontier Corporate LLM Adoption
+This service sits between your data and **cloud-hosted and/or proprietary LLMs (OpenAI, Gemini, Claude, Grok, and similar providers)** to reduce direct sensitive-text exposure.
+
+## Where Sensitive Text Blocks Cloud-Hosted and/or Proprietary LLM Adoption
 
 Many enterprise teams already have valid LLM use cases, but security/legal controls prevent sending raw text to external model providers. Typical blocked scenarios:
 
@@ -33,9 +35,9 @@ Many enterprise teams already have valid LLM use cases, but security/legal contr
 - **Security/SOC workflows**: incident narratives may include user IDs, endpoints, and internal infrastructure references.
 - **Internal knowledge assistants**: enterprise docs frequently contain confidential project, vendor, or employee data.
 
-This creates a common enterprise bottleneck: product teams want frontier-model quality, while governance teams require strong controls on sensitive text exposure.
+This creates a common enterprise bottleneck: product teams want high-end model quality, while governance teams require strong controls on sensitive text exposure.
 
-ollamonym is designed to be the privacy middleware layer that resolves this tension:
+ØllamØnym is designed to be the privacy middleware layer that resolves this tension:
 
 - Transform sensitive entities before model calls.
 - Preserve enough semantic structure to keep LLM output useful.
@@ -76,8 +78,8 @@ ollamonym is designed to be the privacy middleware layer that resolves this tens
 - **Dockerized Deployment**
   - FastAPI + Ollama stack with persistent model volume.
 
-## **Caution** :
-[!CAUTION] Several components of this project were generated and or refactored via agentic AI. Tests were set but caution is required. 
+## **⚠️** **Caution:**
+  - Several components of this project were generated and or refactored via agentic AI. Tests were set but caution is required. 
 
 ## High-Level Architecture
 
@@ -264,6 +266,10 @@ Important env vars:
 - `OLLAMA_KEEP_ALIVE`
 - `LLM_NUM_PREDICT`
 - `LLM_TEMPERATURE`
+- `LLM_WARMUP_ENABLED` (default `true`, runs warmup at startup)
+- `LLM_WARMUP_MODEL` (optional override; defaults to `LLM_MODEL`)
+- `LLM_WARMUP_TIMEOUT` (seconds for warmup request)
+- `LLM_WARMUP_NUM_PREDICT` (token budget for warmup call)
 - `LLM_CONCURRENCY`
 - `CHUNK_CHAR_TARGET`
 - `CHUNK_MAX_PARALLEL`
@@ -274,6 +280,7 @@ Template controls:
 
 - entity definitions and examples
 - placeholder format and pseudonym providers
+- per-entity fake strategy override (`entity.fake_provider`) and pseudo-entity pools (`entity.use_pseudo_entities`, `entity.pseudo_entities`)
 - post-pass alias policy (`postpass_alias`)
 - per-template model selection (`template.llm.model`)
 

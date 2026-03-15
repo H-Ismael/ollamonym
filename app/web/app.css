@@ -7,7 +7,14 @@
   --card: rgba(255, 255, 255, 0.62);
   --card-strong: rgba(255, 255, 255, 0.78);
   --surface: rgba(255, 255, 255, 0.4);
-  --accent: #121212;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.16);
+  --accent-halo: rgba(37, 99, 235, 0.34);
+  --neon-red: #e1061b;
+  --neon-red-strong: #bc0014;
+  --neon-red-soft: rgba(225, 6, 27, 0.24);
+  --neon-red-halo: rgba(225, 6, 27, 0.46);
   --ok: #1f6f47;
   --bad: #9e2f2f;
 }
@@ -36,6 +43,13 @@ body::after {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.06), transparent 15%, transparent 85%, rgba(0, 0, 0, 0.06));
 }
 
+body.demo-body {
+  --accent: var(--neon-red);
+  --accent-strong: var(--neon-red-strong);
+  --accent-soft: var(--neon-red-soft);
+  --accent-halo: var(--neon-red-halo);
+}
+
 .bg-orb {
   position: fixed;
   z-index: -1;
@@ -55,9 +69,13 @@ body::after {
 .orb-b {
   width: 330px;
   height: 330px;
-  background: #5a5a5a;
+  background: #3b5aac;
   bottom: -8%;
   right: -80px;
+}
+
+body.demo-body .orb-b {
+  background: #8f1d2a;
 }
 
 h1, h2, h3 { margin: 0.2rem 0 0.6rem; }
@@ -113,9 +131,10 @@ h1, h2, h3 { margin: 0.2rem 0 0.6rem; }
 }
 
 .tab.active {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   color: #fff;
   border-color: var(--accent);
+  box-shadow: 0 8px 20px var(--accent-halo);
 }
 
 main { padding: 0 1rem 1.2rem; }
@@ -175,7 +194,7 @@ textarea:focus,
 select:focus,
 .btn:focus,
 .tab:focus {
-  outline: 2px solid #111;
+  outline: 2px solid var(--accent-strong);
   outline-offset: 1px;
 }
 
@@ -226,7 +245,7 @@ table {
   cursor: pointer;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
   backdrop-filter: blur(8px);
 }
 
@@ -236,9 +255,25 @@ table {
 }
 
 .btn.primary {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   color: #fff;
   border-color: var(--accent);
+}
+
+.btn.primary:hover {
+  border-color: var(--accent-strong);
+  box-shadow: 0 10px 22px var(--accent-soft);
+}
+
+.btn.cta-red {
+  background: linear-gradient(138deg, var(--neon-red), var(--neon-red-strong));
+  border-color: var(--neon-red-strong);
+  color: #fff;
+}
+
+.btn.cta-red:hover {
+  border-color: #8d0011;
+  box-shadow: 0 10px 22px var(--neon-red-soft);
 }
 
 .btn.ghost { background: transparent; }
@@ -283,6 +318,10 @@ table {
 .timeline-item {
   border-bottom: 1px dashed var(--line);
   padding: 0.35rem 0;
+}
+
+.timeline-item:nth-child(3n) {
+  border-bottom-color: var(--neon-red-soft);
 }
 
 .previews pre {
@@ -377,7 +416,7 @@ td {
 .hero-brand {
   margin: 0 auto 0.4rem;
   max-width: 420px;
-  height: clamp(118px, 15vw, 156px);
+  height: clamp(106px, 13.5vw, 142px);
   overflow: hidden;
   line-height: 0;
 }
@@ -386,7 +425,7 @@ td {
   width: 100%;
   height: auto;
   display: block;
-  transform: translateY(-8%);
+  transform: translateY(-6%);
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
 }
 
@@ -435,6 +474,17 @@ td {
 }
 
 .hero-copy { max-width: 56ch; color: var(--ink-soft); }
+
+.neon-key {
+  color: var(--neon-red-strong);
+  font-weight: 700;
+  text-shadow: 0 0 16px var(--neon-red-soft);
+}
+
+.blood-red {
+  color: var(--neon-red-strong);
+  text-shadow: 0 0 14px var(--neon-red-soft);
+}
 
 .hero-badges {
   display: flex;
@@ -485,9 +535,15 @@ td {
 
 .signal-line span {
   height: 8px;
-  background: linear-gradient(90deg, rgba(20, 20, 20, 0.95), rgba(50, 50, 50, 0.5));
+  background: linear-gradient(90deg, rgba(14, 14, 14, 0.94), rgba(54, 54, 54, 0.62));
   border-radius: 999px;
   animation: pulse 2.1s infinite ease-in-out;
+}
+
+.signal-line span:nth-child(2),
+.signal-line span:nth-child(4) {
+  background: linear-gradient(90deg, rgba(20, 20, 20, 0.92), var(--neon-red));
+  box-shadow: 0 0 14px var(--neon-red-halo);
 }
 
 .signal-line span:nth-child(2) { animation-delay: 0.2s; }
@@ -605,7 +661,7 @@ td {
 }
 
 .site-footer a {
-  color: var(--ink);
+  color: var(--accent-strong);
   text-decoration: none;
   font-weight: 600;
 }
