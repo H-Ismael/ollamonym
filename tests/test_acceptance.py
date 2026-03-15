@@ -382,6 +382,19 @@ class TestTemplateValidation:
         assert not valid
         assert any("postpass_alias.entity_ids" in err for err in errors)
 
+    def test_invalid_entity_fake_provider(self, sample_template):
+        sample_template.entities[0].fake_provider = "invalid"
+        valid, errors = validate_template(sample_template)
+        assert not valid
+        assert any("fake_provider must be 'faker' or 'llm'" in err for err in errors)
+
+    def test_use_pseudo_entities_requires_list(self, sample_template):
+        sample_template.entities[0].use_pseudo_entities = True
+        sample_template.entities[0].pseudo_entities = []
+        valid, errors = validate_template(sample_template)
+        assert not valid
+        assert any("use_pseudo_entities=true" in err for err in errors)
+
 
 # ============================================================================
 # Tests: Normalization & Deduplication
@@ -969,6 +982,79 @@ class TestLLMFakeProvider:
         alias_fake = next(iter(token_to_fake_2.values()))
         assert alias_fake in full_name_fake.split()
         assert mock_ollama.generate_fake_value.call_count == 1
+
+    def test_entity_fake_provider_overrides_request_default(self, template_registry):
+        template = template_registry.get_template("test-pii")
+        for entity in template.entities:
+            if entity.id == "PERSON":
+                entity.fake_provider = "llm"
+            if entity.id == "ORG":
+                entity.fake_provider = "faker"
+
+        mock_ollama = Mock()
+        mock_ollama.extract_entities.return_value = [
+            ExtractedEntity(entity_id="PERSON", text="John Doe"),
+            ExtractedEntity(entity_id="ORG", text="Acme Corp"),
+        ]
+        mock_ollama.generate_fake_value.return_value = "Alex Stone"
+
+        detector = Detector(
+            template_registry=template_registry,
+            ollama_client=mock_ollama,
+            pseudonym_secret="test-secret",
+            chunking_enabled=False,
+        )
+
+        req = AnonymizeRequest(
+            session_id="s-mixed-provider",
+            template_id="test-pii",
+            text="John Doe works at Acme Corp.",
+            render_mode="realistic",
+            fake_provider="faker",
+            language="auto",
+        )
+
+        _, _, token_to_fake, _ = detector.detect_and_anonymize(req)
+        assert any("Alex Stone" in v for v in token_to_fake.values())
+        assert mock_ollama.generate_fake_value.call_count == 1
+        _, kwargs = mock_ollama.generate_fake_value.call_args
+        assert kwargs.get("entity_id") == "PERSON"
+
+    def test_entity_pseudo_entities_take_priority_over_llm_and_faker(self, template_registry):
+        template = template_registry.get_template("test-pii")
+        for entity in template.entities:
+            if entity.id == "PERSON":
+                entity.use_pseudo_entities = True
+                entity.pseudo_entities = ["Pseudo Alpha", "Pseudo Beta", "Pseudo Gamma"]
+                entity.fake_provider = "llm"
+
+        mock_ollama = Mock()
+        mock_ollama.extract_entities.return_value = [
+            ExtractedEntity(entity_id="PERSON", text="John Doe"),
+        ]
+        mock_ollama.generate_fake_value.return_value = "Should Not Be Used"
+
+        detector = Detector(
+            template_registry=template_registry,
+            ollama_client=mock_ollama,
+            pseudonym_secret="test-secret",
+            chunking_enabled=False,
+        )
+
+        req = AnonymizeRequest(
+            session_id="s-pseudo-entities",
+            template_id="test-pii",
+            text="John Doe joined.",
+            render_mode="realistic",
+            fake_provider="llm",
+            language="auto",
+        )
+
+        anon_text, _, token_to_fake, _ = detector.detect_and_anonymize(req)
+        fake = next(iter(token_to_fake.values()))
+        assert fake in {"Pseudo Alpha", "Pseudo Beta", "Pseudo Gamma"}
+        assert fake in anon_text
+        mock_ollama.generate_fake_value.assert_not_called()
 
 
 if __name__ == "__main__":

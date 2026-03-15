@@ -68,7 +68,7 @@
             </select>
           </label>
           <p id="fake-provider-note" class="hint"></p>
-          <label>Token Delay (ms) <input id="token-delay" type="number" min="0" max="1000" value="30" /></label>
+          <label>Token Delay (ms) <input id="token-delay" type="number" min="0" max="1000" value="60" /></label>
           <label>Text
             <textarea id="source-text" rows="9">Hello Sarah,I hope you're doing well. Following our call last week, could you please send the updated contract to michael.dupont@novatech-solutions.com and cc finance@novatech-solutions.com? If there are any issues, feel free to reach me directly at +1 (415) 782-4490 or on my personal line +33 6 45 78 12 90. We’re coordinating this with Novatech Solutions Ltd. Novatech's buildings address 878,venue charles , NY ,USA.</textarea>
           </label>
@@ -143,6 +143,19 @@
             <label>Provider (optional)
               <input id="quick-entity-provider" placeholder="e.g. company, email, name" />
             </label>
+          </div>
+          <div class="grid-three">
+            <label>Fake Strategy
+              <select id="quick-entity-fake-provider">
+                <option value="">Use request default</option>
+                <option value="faker">Force faker</option>
+                <option value="llm">Force llm</option>
+              </select>
+            </label>
+            <label>Pseudo-Entities (optional, one per line)
+              <textarea id="quick-entity-pseudo-entities" rows="4" placeholder="Contoso Labs&#10;Northwind Systems"></textarea>
+            </label>
+            <label class="inline-check"><input id="quick-entity-use-pseudo" type="checkbox" /> Use pseudo-entities list for this entity</label>
           </div>
           <div class="grid-two">
             <label>Positive Examples (required, one per line)

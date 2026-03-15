@@ -94,6 +94,18 @@ class EntityDefinition(BaseModel):
     id: str = Field(..., description="Entity ID (e.g., PERSON, ORG)")
     enabled: bool = Field(True, description="Whether this entity is active")
     instructions: str = Field(..., description="Instructions for LLM to detect this entity")
+    fake_provider: Optional[str] = Field(
+        None,
+        description="Optional per-entity override: 'faker' or 'llm'",
+    )
+    use_pseudo_entities: bool = Field(
+        False,
+        description="If true and pseudo_entities is provided, replacement is chosen from that list",
+    )
+    pseudo_entities: Optional[List[str]] = Field(
+        None,
+        description="Optional candidate replacement values for this entity",
+    )
     examples: Optional[Dict[str, List[str]]] = Field(
         None, description="Optional positive/negative examples"
     )

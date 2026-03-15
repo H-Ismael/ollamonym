@@ -282,6 +282,36 @@ class OllamaClient:
         """Close the HTTP client."""
         self.client.close()
 
+    def warmup_model(
+        self,
+        model: Optional[str] = None,
+        timeout: float = 120.0,
+        num_predict: int = 1,
+    ) -> bool:
+        """Trigger a lightweight call so the model is loaded before first user request."""
+        model_name = self._resolve_model_name(model)
+        payload = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": "Warmup request."},
+                {"role": "user", "content": "ok"},
+            ],
+            "stream": False,
+            "options": {
+                "num_predict": max(1, num_predict),
+                "temperature": 0,
+            },
+        }
+        if self.keep_alive:
+            payload["keep_alive"] = self.keep_alive
+
+        try:
+            self._request_json("POST", "/api/chat", json_payload=payload, timeout=timeout)
+            return True
+        except Exception as e:
+            logger.warning("LLM warmup failed: %s", e)
+            return False
+
     def generate_fake_value(
         self,
         entity_id: str,
@@ -300,11 +330,12 @@ class OllamaClient:
             f"Entity type: {entity_id}\n"
             f"Original: {original_value}\n"
             "Constraints:\n"
+            "- Do not copy any exact sensitive token from original\n"
             "- Keep the same semantic shape and language style\n"
             "- Keep similar format (email-like stays email-like, address-like stays address-like)\n"
-            "- Do not copy any exact sensitive token from original\n"
             "- Output a single line only"
         )
+        
         output = self._chat(system_message, user_message, model=model).strip()
         cleaned = " ".join(output.replace("\n", " ").split())
         if not cleaned:

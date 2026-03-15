@@ -1,6 +1,8 @@
 """Main detection and anonymization pipeline."""
 
+import hashlib
 import logging
+import random
 import re
 from typing import Dict, List, Optional
 
@@ -153,9 +155,10 @@ class Detector:
             provider_map = None
             if template.replacement.pseudonym and template.replacement.pseudonym.providers:
                 provider_map = template.replacement.pseudonym.providers
-            use_llm_fake = request.fake_provider.lower() == "llm"
+            default_fake_provider = request.fake_provider.lower()
+            entity_definitions = {entity.id: entity for entity in template.entities}
             renderer = None
-            if not use_llm_fake:
+            if default_fake_provider != "llm":
                 renderer = RealisticRenderer(
                     self.pseudonym_secret,
                     request.session_id,
@@ -170,29 +173,52 @@ class Detector:
                 # Extract entity_id from token (hacky but works)
                 if token.startswith("<<") and token.endswith(">>"):
                     inner = token[2:-2]
-                    entity_id, token_id = inner.split(":")
+                    entity_id, token_id = inner.split(":", 1)
+                    entity_cfg = entity_definitions.get(entity_id)
                     group_key = self.alias_postpass.resolve_group_key(
                         request.session_id,
                         entity_id,
                         original,
                         template.canon,
                     )
-                    if use_llm_fake:
-                        fake = self._generate_llm_fake(
-                            session_id=request.session_id,
-                            token=token,
-                            entity_id=entity_id,
-                            original=original,
-                            group_key=group_key or token_id,
-                            model=template.llm.model or None,
+                    pseudo_candidates = self._effective_pseudo_entities(entity_cfg)
+                    if pseudo_candidates:
+                        fake = self._choose_pseudo_entity(
+                            request.session_id,
+                            token,
+                            entity_id,
+                            pseudo_candidates,
                         )
                     else:
-                        fake = renderer.generate_fake(
-                            entity_id,
-                            token_id,
-                            original=original,
-                            group_key=group_key or token_id,
+                        provider_for_entity = (
+                            entity_cfg.fake_provider.lower()
+                            if entity_cfg and entity_cfg.fake_provider
+                            else default_fake_provider
                         )
+                        use_llm_fake = provider_for_entity == "llm"
+                        if use_llm_fake:
+                            fake = self._generate_llm_fake(
+                                session_id=request.session_id,
+                                token=token,
+                                entity_id=entity_id,
+                                original=original,
+                                group_key=group_key or token_id,
+                                model=template.llm.model or None,
+                            )
+                        else:
+                            if renderer is None:
+                                renderer = RealisticRenderer(
+                                    self.pseudonym_secret,
+                                    request.session_id,
+                                    provider_map=provider_map,
+                                )
+                            fake = renderer.generate_fake(
+                                entity_id,
+                                token_id,
+                                original=original,
+                                group_key=group_key or token_id,
+                            )
+
                     if fake in fake_to_token and fake_to_token[fake] != token:
                         fake = f"{fake}-{token_id[:3]}"
                     token_to_fake[token] = fake
@@ -200,6 +226,31 @@ class Detector:
                     anonymized_text = anonymized_text.replace(token, fake)
 
         return anonymized_text, token_to_original, token_to_fake, fake_to_token
+
+    @staticmethod
+    def _effective_pseudo_entities(entity_cfg) -> List[str]:
+        """Return cleaned pseudo-entity candidates when explicitly enabled."""
+        if not entity_cfg or not entity_cfg.use_pseudo_entities:
+            return []
+        values = entity_cfg.pseudo_entities or []
+        cleaned = [v.strip() for v in values if isinstance(v, str) and v.strip()]
+        return cleaned
+
+    @staticmethod
+    def _choose_pseudo_entity(
+        session_id: str,
+        token: str,
+        entity_id: str,
+        candidates: List[str],
+    ) -> str:
+        """Choose one pseudo-entity deterministically per token/session."""
+        if not candidates:
+            raise ValueError("Pseudo-entity candidate list cannot be empty")
+        seed_input = f"{session_id}|{entity_id}|{token}"
+        digest = hashlib.sha256(seed_input.encode("utf-8")).digest()
+        seed = int.from_bytes(digest[:8], "big")
+        rng = random.Random(seed)
+        return rng.choice(candidates)
 
     def _generate_llm_fake(
         self,
