@@ -25,6 +25,10 @@ LLM_MODEL = os.getenv("LLM_MODEL", "llama3.1:8b-instruct-q4_K_M")
 OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "30m")
 LLM_NUM_PREDICT = int(os.getenv("LLM_NUM_PREDICT", "512"))
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
+LLM_WARMUP_ENABLED = os.getenv("LLM_WARMUP_ENABLED", "true").lower() == "true"
+LLM_WARMUP_MODEL = os.getenv("LLM_WARMUP_MODEL", "").strip() or None
+LLM_WARMUP_TIMEOUT = float(os.getenv("LLM_WARMUP_TIMEOUT", "120"))
+LLM_WARMUP_NUM_PREDICT = int(os.getenv("LLM_WARMUP_NUM_PREDICT", "1"))
 
 # Concurrency and chunking
 LLM_CONCURRENCY = int(os.getenv("LLM_CONCURRENCY", "1"))

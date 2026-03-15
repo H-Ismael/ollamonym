@@ -33,6 +33,20 @@ def validate_template(template: TemplateSchema) -> tuple[bool, List[str]]:
         if entity.id in entity_ids:
             errors.append(f"Duplicate entity ID: {entity.id}")
         entity_ids.add(entity.id)
+        if entity.fake_provider and entity.fake_provider not in {"faker", "llm"}:
+            errors.append(
+                f"Entity {entity.id} fake_provider must be 'faker' or 'llm', got: {entity.fake_provider}"
+            )
+        if entity.use_pseudo_entities and not entity.pseudo_entities:
+            errors.append(
+                f"Entity {entity.id} has use_pseudo_entities=true but no pseudo_entities provided"
+            )
+        if entity.pseudo_entities is not None:
+            cleaned_values = [v.strip() for v in entity.pseudo_entities if isinstance(v, str)]
+            if len(cleaned_values) != len(entity.pseudo_entities):
+                errors.append(f"Entity {entity.id} pseudo_entities must be strings")
+            if any(not v for v in cleaned_values):
+                errors.append(f"Entity {entity.id} pseudo_entities must not contain empty values")
 
     # Check LLM config
     if not template.llm.model:

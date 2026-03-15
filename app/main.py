@@ -4,9 +4,9 @@ import asyncio
 import json
 import logging
 import re
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 import httpx
 from fastapi import Body, FastAPI, HTTPException, status
@@ -41,6 +41,9 @@ logger = logging.getLogger(__name__)
 template_registry: TemplateRegistry = None
 ollama_client: OllamaClient = None
 detector: Detector = None
+llm_warmup_task: Optional[asyncio.Task] = None
+llm_warmup_status: str = "not_started"
+llm_warmup_error: Optional[str] = None
 TEMPLATE_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 PROTECTED_TEMPLATE_PREFIX = "default-"
 WEB_ROOT = Path(__file__).parent / "web"
@@ -50,6 +53,7 @@ WEB_ROOT = Path(__file__).parent / "web"
 async def lifespan(app: FastAPI):
     """Manage app lifecycle: startup and shutdown."""
     global template_registry, ollama_client, detector
+    global llm_warmup_task, llm_warmup_status, llm_warmup_error
 
     # Startup
     logger.info("Starting up PII Anonymizer Service v2")
@@ -94,10 +98,45 @@ async def lifespan(app: FastAPI):
 
     logger.info(f"Loaded {len(template_registry.list_templates())} templates")
 
+    if config.LLM_WARMUP_ENABLED:
+        llm_warmup_status = "pending"
+        llm_warmup_error = None
+
+        async def _run_warmup():
+            global llm_warmup_status, llm_warmup_error
+            llm_warmup_status = "running"
+            model_name = config.LLM_WARMUP_MODEL or config.LLM_MODEL
+            logger.info("Starting non-blocking LLM warmup for model=%s", model_name)
+            ok = await asyncio.to_thread(
+                ollama_client.warmup_model,
+                model_name,
+                config.LLM_WARMUP_TIMEOUT,
+                config.LLM_WARMUP_NUM_PREDICT,
+            )
+            if ok:
+                llm_warmup_status = "ready"
+                llm_warmup_error = None
+                logger.info("LLM warmup completed for model=%s", model_name)
+            else:
+                llm_warmup_status = "failed"
+                llm_warmup_error = "warmup request failed"
+                logger.warning("LLM warmup did not complete successfully")
+
+        llm_warmup_task = asyncio.create_task(_run_warmup())
+    else:
+        llm_warmup_task = None
+        llm_warmup_status = "disabled"
+        llm_warmup_error = None
+        logger.info("LLM warmup disabled by config")
+
     yield
 
     # Shutdown
     logger.info("Shutting down PII Anonymizer Service")
+    if llm_warmup_task and not llm_warmup_task.done():
+        llm_warmup_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await llm_warmup_task
     if detector:
         detector.shutdown()
     if ollama_client:
@@ -141,6 +180,19 @@ def _assert_editable_template_id(template_id: str) -> None:
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
+
+
+@app.get("/health/llm", tags=["Health"])
+async def llm_health_check():
+    """LLM warmup and runtime availability status."""
+    return {
+        "status": "ok",
+        "warmup": {
+            "state": llm_warmup_status,
+            "error": llm_warmup_error,
+        },
+        "ollama_reachable": ollama_client.health_check() if ollama_client else False,
+    }
 
 
 @app.get("/", tags=["UI"])

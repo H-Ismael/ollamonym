@@ -76,8 +76,8 @@ ollamonym is designed to be the privacy middleware layer that resolves this tens
 - **Dockerized Deployment**
   - FastAPI + Ollama stack with persistent model volume.
 
-## **Caution** :
-[!CAUTION] Several components of this project were generated and or refactored via agentic AI. Tests were set but caution is required. 
+## **⚠️** **Caution:**
+  - Several components of this project were generated and or refactored via agentic AI. Tests were set but caution is required. 
 
 ## High-Level Architecture
 
@@ -264,6 +264,10 @@ Important env vars:
 - `OLLAMA_KEEP_ALIVE`
 - `LLM_NUM_PREDICT`
 - `LLM_TEMPERATURE`
+- `LLM_WARMUP_ENABLED` (default `true`, runs warmup at startup)
+- `LLM_WARMUP_MODEL` (optional override; defaults to `LLM_MODEL`)
+- `LLM_WARMUP_TIMEOUT` (seconds for warmup request)
+- `LLM_WARMUP_NUM_PREDICT` (token budget for warmup call)
 - `LLM_CONCURRENCY`
 - `CHUNK_CHAR_TARGET`
 - `CHUNK_MAX_PARALLEL`
@@ -274,6 +278,7 @@ Template controls:
 
 - entity definitions and examples
 - placeholder format and pseudonym providers
+- per-entity fake strategy override (`entity.fake_provider`) and pseudo-entity pools (`entity.use_pseudo_entities`, `entity.pseudo_entities`)
 - post-pass alias policy (`postpass_alias`)
 - per-template model selection (`template.llm.model`)
 
