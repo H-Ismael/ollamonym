@@ -8,7 +8,7 @@ Template-driven, session-stable anonymization and pseudonymization for teams tha
 
 ## Quick Demo Video
 
-- [Watch / download the demo video (MP4)](app/web/img_assets/output_demo_202603151048.mp4)
+- [Watch the demo on YouTube](https://youtu.be/J5b6Jqc9jug)
 
 
 ## Why This Project Exists
