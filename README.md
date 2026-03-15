@@ -6,6 +6,10 @@
 
 Template-driven, session-stable anonymization and pseudonymization for teams that want to use LLM workflows while reducing data leakage risk.
 
+## Quick Demo Video
+
+- [Watch / download the demo video (MP4)](app/web/img_assets/output_demo_202603151048.mp4)
+
 
 ## Why This Project Exists
 
