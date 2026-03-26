@@ -10,6 +10,11 @@ Template-driven, session-stable anonymization and pseudonymization for teams tha
 
 - [Watch the demo on YouTube](https://youtu.be/J5b6Jqc9jug)
 
+## Hardware Note
+
+This project was built and tested on a consumer-grade GPU with **8 GB VRAM**.
+Using more VRAM can improve performance and quality by enabling lower latency and/or less aggressive quantization (which can improve extraction accuracy).
+
 
 ## Why This Project Exists
 
